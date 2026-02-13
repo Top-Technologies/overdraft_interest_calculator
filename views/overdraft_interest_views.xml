@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!--   OVERDRAFT INTEREST — LIST VIEW             -->
+    <!-- ============================================ -->
+    <record id="view_overdraft_interest_list" model="ir.ui.view">
+        <field name="name">overdraft.interest.list</field>
+        <field name="model">overdraft.interest</field>
+        <field name="arch" type="xml">
+            <list string="Overdraft Interest">
+                <field name="name" string="Reference"/>
+                <field name="bank_journal_id" string="Bank Journal"/>
+                <field name="bank_id" string="Bank"/>
+                <field name="date" string="Start Date"/>
+                <field name="due_date" string="End Date" optional="show"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="overdraft_limit" string="Overdraft Limit"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+                <field name="remaining_overdraft" string="Remaining"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"
+                       optional="show"/>
+                <field name="state" string="Status"
+                       widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-primary="state == 'submitted'"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'rejected'"
+                       decoration-muted="state == 'closed'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!--   OVERDRAFT INTEREST — FORM VIEW             -->
+    <!-- ============================================ -->
+    <record id="view_overdraft_interest_form" model="ir.ui.view">
+        <field name="name">overdraft.interest.form</field>
+        <field name="model">overdraft.interest</field>
+        <field name="arch" type="xml">
+            <form string="Overdraft Interest">
+                <!-- Workflow Buttons -->
+                <header>
+                    <button name="action_submit"
+                            string="Submit for Approval"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve"
+                            string="Approve"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'submitted'"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_reject"
+                            string="Reject"
+                            type="object"
+                            invisible="state != 'submitted'"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_reset_to_draft"
+                            string="Reset to Draft"
+                            type="object"
+                            invisible="state not in ('rejected', 'submitted')"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_close"
+                            string="Close"
+                            type="object"
+                            invisible="state != 'approved'"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,closed"/>
+                </header>
+
+                <sheet>
+                    <!-- Reference Title -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Reference"/>
+                        </h1>
+                    </div>
+
+                    <!-- Main Fields - Two Columns -->
+                    <group>
+                        <group string="Bank Details">
+                            <field name="bank_journal_id"
+                                   options="{'no_create': True}"
+                                   readonly="state in ('approved', 'closed')"/>
+                            <field name="bank_id" readonly="1" force_save="1"/>
+                            <field name="date" string="Start Date"
+                                   readonly="state in ('approved', 'closed')"/>
+                            <field name="due_date" string="End Date"
+                                   readonly="state == 'closed'"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Rates &amp; Limits">
+                            <field name="daily_interest_rate"
+                                   string="Daily Interest Rate (%)"
+                                   widget="percentage"
+                                   readonly="state == 'closed'"/>
+                            <field name="daily_penalty_rate"
+                                   string="Daily Penalty Rate (%)"
+                                   widget="percentage"
+                                   readonly="state == 'closed'"/>
+                            <field name="overdraft_limit"
+                                   widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"
+                                   readonly="state in ('approved', 'closed')"/>
+                        </group>
+                    </group>
+
+                    <!-- Tabs -->
+                    <notebook>
+                        <!-- Tab 1: Overdraft Entries -->
+                        <page string="Overdraft Entries">
+                            <field name="overdraft_line_ids">
+                                <list editable="bottom">
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="date" string="Date"/>
+                                    <field name="amount" string="Amount"/>
+                                    <field name="interest" string="Interest"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1" force_save="1"/>
+                                    <field name="penalty" string="Penalty"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="payment" string="Payment"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="total_balance" string="Total"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="remaining_balance" string="Remaining"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+
+
+                    </notebook>
+                </sheet>
+
+                <!-- Chatter (Odoo 18 style) -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!--   STATUS DASHBOARD — LIST VIEW               -->
+    <!-- ============================================ -->
+    <record id="view_overdraft_status_list" model="ir.ui.view">
+        <field name="name">overdraft.interest.status.list</field>
+        <field name="model">overdraft.interest</field>
+        <field name="arch" type="xml">
+            <list string="Overdraft Status" create="false" edit="false" delete="false">
+                <field name="name" string="Reference"/>
+                <field name="bank_journal_id" string="Bank Journal"/>
+                <field name="due_date" string="End Date"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="total_outstanding" string="Total Outstanding"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+                <field name="projected_daily_interest" string="Projected Interest"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+                <field name="remaining_overdraft" string="Remaining"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+                <field name="state" string="Status"
+                       widget="badge"
+                       decoration-success="state == 'approved'"/>
+            </list>
+        </field>
+    </record>
+</odoo>

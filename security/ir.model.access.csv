@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_overdraft_interest_user,overdraft.interest.user,model_overdraft_interest,group_overdraft_user,1,1,1,0
+access_overdraft_interest_manager,overdraft.interest.manager,model_overdraft_interest,group_overdraft_manager,1,1,1,1
+access_overdraft_line_user,overdraft.line.user,model_overdraft_line,group_overdraft_user,1,1,1,0
+access_overdraft_line_manager,overdraft.line.manager,model_overdraft_line,group_overdraft_manager,1,1,1,1
