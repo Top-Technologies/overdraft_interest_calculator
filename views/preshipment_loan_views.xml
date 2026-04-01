@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!--   PRE-SHIPMENT LOAN — LIST VIEW              -->
+    <!-- ============================================ -->
+    <record id="view_preshipment_loan_list" model="ir.ui.view">
+        <field name="name">preshipment.loan.list</field>
+        <field name="model">preshipment.loan</field>
+        <field name="arch" type="xml">
+            <list string="Pre-Shipment Loans">
+                <field name="name" string="Reference"/>
+                <field name="bank_id" string="Bank"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="loan_amount" string="Loan Amount" widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+                <field name="foreign_currency_id" string="FC"/>
+                <field name="total_currency_to_store" string="Currency to Store"/>
+                <field name="currency_fulfillment_percent" string="Fulfillment %"
+                       widget="percentage"/>
+                <field name="start_date" string="Start"/>
+                <field name="expected_export_date" string="Export Date"/>
+                <field name="penalty_amount" string="Penalty" widget="monetary"
+                       options="{'currency_field': 'currency_id'}" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'active'"
+                       decoration-muted="state == 'closed'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!--   PRE-SHIPMENT LOAN — FORM VIEW              -->
+    <!-- ============================================ -->
+    <record id="view_preshipment_loan_form" model="ir.ui.view">
+        <field name="name">preshipment.loan.form</field>
+        <field name="model">preshipment.loan</field>
+        <field name="arch" type="xml">
+            <form string="Pre-Shipment Loan">
+                <header>
+                    <button name="action_submit"
+                            string="Submit for Approval"
+                            type="object"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve"
+                            string="Approve"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'submitted'"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_reject"
+                            string="Reject"
+                            type="object"
+                            invisible="state != 'submitted'"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_activate" string="Activate"
+                            type="object" class="oe_highlight"
+                            invisible="state != 'approved'"/>
+                    <button name="action_close" string="Close"
+                            type="object"
+                            invisible="state != 'active'"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft"
+                            type="object"
+                            invisible="state not in ('rejected', 'submitted')"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,active,closed"/>
+                    <button name="action_create_bill"
+                            string="Create Bill"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state not in ('active',)"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_moves"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-book">
+                            <field name="move_count" widget="statinfo"
+                                   string="Journal Entries"/>
+                        </button>
+                        <button name="action_view_bills"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-pencil-square-o">
+                            <field name="bill_count" widget="statinfo"
+                                   string="Bills"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Reference"/></h1>
+                    </div>
+
+                    <!-- Loan & Export Details -->
+                    <group>
+                        <group string="Loan Details">
+                            <field name="bank_journal_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="bank_id"/>
+                            <field name="loan_amount" widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"
+                                   readonly="state != 'draft'"/>
+                            <field name="annual_interest_rate"
+                                   readonly="state != 'draft'"/>
+                            <field name="penalty_rate"
+                                   readonly="state != 'draft'"/>
+                            <field name="currency_id"
+                                   readonly="state != 'draft'"
+                                   groups="base.group_multi_currency"/>
+                        </group>
+                        <group string="Foreign Currency Commitment">
+                            <field name="foreign_currency_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="total_currency_to_store"
+                                   readonly="state != 'draft'"/>
+                            <field name="start_date"
+                                   readonly="state != 'draft'"/>
+                            <field name="expected_export_date"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+
+                    <!-- Financed Goods -->
+                    <group>
+                        <group string="Financed Goods">
+                            <field name="financed_goods_description"
+                                   readonly="state != 'draft'"/>
+                            <field name="financed_goods_value" widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+
+                    <!-- Account Fields -->
+                    <group>
+                        <group string="Account Entries">
+                            <field name="account_receivable_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="account_payable_id"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Account Properties">
+                            <field name="income_account_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="expense_account_id"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- Summary Tab -->
+                        <page string="Summary">
+                            <group>
+                                <group string="Loan Usage">
+                                    <field name="loan_used" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                    <field name="loan_remaining" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                    <field name="total_interest" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                    <field name="penalty_amount" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                </group>
+                                <group string="Currency Fulfillment">
+                                    <field name="currency_stored" readonly="1"/>
+                                    <field name="currency_remaining" readonly="1"/>
+                                    <field name="currency_fulfillment_percent"
+                                           widget="percentage" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Entries Tab -->
+                        <page string="Utilisation &amp; Currency Entries">
+                            <field name="loan_line_ids" editable="bottom">
+                                <list string="Entries" create="true" delete="true">
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="foreign_currency_id" column_invisible="1"/>
+                                    <field name="date" string="Date"/>
+                                    <field name="amount_used" string="Loan Amount Used"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="currency_deposited"
+                                           string="Foreign Currency Deposited"/>
+                                    <field name="interest" string="Interest"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="penalty" string="Penalty"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="notes" string="Notes"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!--   PRE-SHIPMENT LOAN — GRAPH VIEW             -->
+    <!-- ============================================ -->
+    <record id="view_preshipment_loan_graph" model="ir.ui.view">
+        <field name="name">preshipment.loan.graph</field>
+        <field name="model">preshipment.loan</field>
+        <field name="arch" type="xml">
+            <graph string="Pre-Shipment Loans" type="bar">
+                <field name="bank_id" type="row"/>
+                <field name="loan_amount" type="measure"/>
+                <field name="loan_used" type="measure"/>
+                <field name="total_interest" type="measure"/>
+                <field name="penalty_amount" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!--   PRE-SHIPMENT LOAN — PIVOT VIEW             -->
+    <!-- ============================================ -->
+    <record id="view_preshipment_loan_pivot" model="ir.ui.view">
+        <field name="name">preshipment.loan.pivot</field>
+        <field name="model">preshipment.loan</field>
+        <field name="arch" type="xml">
+            <pivot string="Pre-Shipment Loans">
+                <field name="bank_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="loan_amount" type="measure"/>
+                <field name="loan_used" type="measure"/>
+                <field name="loan_remaining" type="measure"/>
+                <field name="total_interest" type="measure"/>
+                <field name="penalty_amount" type="measure"/>
+                <field name="financed_goods_value" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+</odoo>

@@ -4,35 +4,77 @@
     <!--   WINDOW ACTIONS                             -->
     <!-- ============================================ -->
 
-    <!-- Main Action: Overdraft Interest Records -->
+    <!-- Overdraft Interest -->
     <record id="action_overdraft_interest" model="ir.actions.act_window">
         <field name="name">Overdraft Interest</field>
         <field name="res_model">overdraft.interest</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_overdraft_interest_list"/>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Create a new Overdraft Interest Record
-            </p>
-            <p>Track your bank overdraft accounts, calculate daily interest
-            and penalties automatically.</p>
-        </field>
+    </record>
+
+    <!-- Term Loan -->
+    <record id="action_term_loan" model="ir.actions.act_window">
+        <field name="name">Term Loans</field>
+        <field name="res_model">term.loan</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_term_loan_list"/>
+    </record>
+
+    <!-- Merchandise Loan -->
+    <record id="action_merchandise_loan" model="ir.actions.act_window">
+        <field name="name">Merchandise Loans</field>
+        <field name="res_model">merchandise.loan</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_merchandise_loan_list"/>
+    </record>
+
+    <!-- Pre-Shipment Loan -->
+    <record id="action_preshipment_loan" model="ir.actions.act_window">
+        <field name="name">Pre-Shipment Loans</field>
+        <field name="res_model">preshipment.loan</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_preshipment_loan_list"/>
     </record>
 
     <!-- ============================================ -->
     <!--   MENU STRUCTURE                             -->
     <!-- ============================================ -->
 
-    <!-- Root Menu -->
+    <!-- Root -->
     <menuitem id="menu_overdraft_root"
-              name="Overdraft Interest"
+              name="Loan Management"
               sequence="10"
               web_icon="overdraft_interest_calculator,static/description/icon.png"/>
 
-    <!-- Submenu: Overdraft Interest Records -->
+    <!-- Dashboard -->
+    <menuitem id="menu_loan_dashboard"
+              name="Dashboard"
+              parent="menu_overdraft_root"
+              action="action_loan_dashboard"
+              sequence="1"/>
+
+    <!-- Direct menu items — no sub-menus -->
     <menuitem id="menu_overdraft_records"
               name="Overdraft Interest"
               parent="menu_overdraft_root"
               action="action_overdraft_interest"
               sequence="10"/>
+
+    <menuitem id="menu_term_loan_records"
+              name="Term Loan"
+              parent="menu_overdraft_root"
+              action="action_term_loan"
+              sequence="20"/>
+
+    <menuitem id="menu_merchandise_loan"
+              name="Merchandise Loan"
+              parent="menu_overdraft_root"
+              action="action_merchandise_loan"
+              sequence="30"/>
+
+    <menuitem id="menu_preshipment_loan"
+              name="Pre-Shipment Loan"
+              parent="menu_overdraft_root"
+              action="action_preshipment_loan"
+              sequence="40"/>
 </odoo>

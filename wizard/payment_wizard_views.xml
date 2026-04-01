@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!--   OVERDRAFT PAYMENT WIZARD                   -->
+    <!-- ============================================ -->
+    <record id="view_overdraft_payment_wizard_form" model="ir.ui.view">
+        <field name="name">overdraft.payment.wizard.form</field>
+        <field name="model">overdraft.payment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Record Payment">
+                <group>
+                    <field name="overdraft_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="date"/>
+                    <field name="amount" widget="monetary"
+                           options="{'currency_field': 'currency_id'}"/>
+                    <field name="memo"/>
+                </group>
+                <footer>
+                    <button name="action_confirm"
+                            string="Confirm Payment"
+                            type="object"
+                            class="oe_highlight"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!--   TERM LOAN PAYMENT WIZARD                   -->
+    <!-- ============================================ -->
+    <record id="view_term_loan_payment_wizard_form" model="ir.ui.view">
+        <field name="name">term.loan.payment.wizard.form</field>
+        <field name="model">term.loan.payment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Record Extra Payment">
+                <group>
+                    <field name="loan_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="line_id"
+                           options="{'no_create': True, 'no_edit': True}"/>
+                    <field name="amount" widget="monetary"
+                           options="{'currency_field': 'currency_id'}"/>
+                    <field name="memo"/>
+                </group>
+                <footer>
+                    <button name="action_confirm"
+                            string="Confirm Payment"
+                            type="object"
+                            class="oe_highlight"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

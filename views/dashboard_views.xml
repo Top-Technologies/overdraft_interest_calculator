@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Client action for the dashboard -->
+    <record id="action_loan_dashboard" model="ir.actions.client">
+        <field name="name">Loan Management Dashboard</field>
+        <field name="tag">loan_management_dashboard</field>
+    </record>
+
+</odoo>

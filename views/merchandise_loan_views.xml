@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!--   MERCHANDISE LOAN — LIST VIEW               -->
+    <!-- ============================================ -->
+    <record id="view_merchandise_loan_list" model="ir.ui.view">
+        <field name="name">merchandise.loan.list</field>
+        <field name="model">merchandise.loan</field>
+        <field name="arch" type="xml">
+            <list string="Merchandise Loans">
+                <field name="name" string="Reference"/>
+                <field name="bank_id" string="Bank"/>
+                <field name="product_id" string="Goods"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="goods_quantity" string="Qty"/>
+                <field name="total_goods_value" widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+                <field name="company_coverage_percent" string="Deposit %" widget="percentage"/>
+                <field name="bank_amount" string="Bank Loan" widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+                <field name="outstanding_loan" string="Outstanding" widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+                <field name="goods_held_qty" string="Held (Qty)"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'submitted'"
+                       decoration-primary="state == 'approved'"
+                       decoration-success="state == 'active'"
+                       decoration-muted="state == 'closed'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!--   MERCHANDISE LOAN — FORM VIEW               -->
+    <!-- ============================================ -->
+    <record id="view_merchandise_loan_form" model="ir.ui.view">
+        <field name="name">merchandise.loan.form</field>
+        <field name="model">merchandise.loan</field>
+        <field name="arch" type="xml">
+            <form string="Merchandise Loan">
+                <header>
+                    <button name="action_submit"
+                            string="Submit for Approval"
+                            type="object"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve"
+                            string="Approve"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'submitted'"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_reject"
+                            string="Reject"
+                            type="object"
+                            invisible="state != 'submitted'"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_activate"
+                            string="Activate"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'approved'"/>
+                    <button name="action_close"
+                            string="Close"
+                            type="object"
+                            invisible="state != 'active'"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_reset_to_draft"
+                            string="Reset to Draft"
+                            type="object"
+                            invisible="state not in ('submitted',)"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,active,closed"/>
+                    <button name="action_create_bill"
+                            string="Create Bill"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state not in ('active',)"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_moves"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-book">
+                            <field name="move_count" widget="statinfo"
+                                   string="Journal Entries"/>
+                        </button>
+                        <button name="action_view_bills"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-pencil-square-o">
+                            <field name="bill_count" widget="statinfo"
+                                   string="Bills"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Reference"/></h1>
+                    </div>
+
+                    <!-- Loan Setup -->
+                    <group>
+                        <group string="Goods Details">
+                            <field name="bank_journal_id"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="bank_id"/>
+                            <field name="product_id"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="goods_quantity"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="goods_unit_price" widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="total_goods_value" widget="monetary"
+                                   options="{'currency_field': 'currency_id'}" readonly="1"/>
+                            <field name="warehouse_id"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="currency_id"
+                                   readonly="state in ('approved', 'active', 'closed')"
+                                   groups="base.group_multi_currency"/>
+                        </group>
+                        <group string="Coverage &amp; Interest">
+                            <field name="company_coverage_percent"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="bank_coverage_percent" readonly="1"/>
+                            <field name="company_amount" widget="monetary"
+                                   options="{'currency_field': 'currency_id'}" readonly="1"/>
+                            <field name="bank_amount" widget="monetary"
+                                   options="{'currency_field': 'currency_id'}" readonly="1"/>
+                            <field name="annual_interest_rate"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="date_from"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="date_to"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="activation_date" readonly="1"
+                                   invisible="not activation_date"/>
+                        </group>
+                    </group>
+
+                    <!-- Account Fields -->
+                    <group>
+                        <group string="Account Entries">
+                            <field name="account_receivable_id"
+                                   readonly="state == 'closed'"/>
+                            <field name="account_payable_id"
+                                   readonly="state == 'closed'"/>
+                        </group>
+                        <group string="Account Properties">
+                            <field name="income_account_id"
+                                   readonly="state == 'closed'"/>
+                            <field name="expense_account_id"
+                                   readonly="state == 'closed'"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- Summary Tab -->
+                        <page string="Summary">
+                            <group>
+                                <group string="Loan Status">
+                                    <field name="outstanding_loan" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                    <field name="total_paid" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                    <field name="total_interest" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                </group>
+                                <group string="Goods Status">
+                                    <field name="goods_held_qty" readonly="1"
+                                           string="Goods Held by Bank (Qty)"/>
+                                    <field name="total_goods_released_qty" readonly="1"
+                                           string="Goods Released (Qty)"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Costing">
+                                    <field name="interest_per_unit" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                    <field name="actual_unit_cost" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Goods Release Entries Tab -->
+                        <page string="Goods Release Entries">
+                            <field name="loan_line_ids" editable="bottom"
+                                   readonly="state not in ('active',)">
+                                <list string="Goods Release Entries" create="true" delete="true">
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="date" string="Date"/>
+                                    <field name="goods_released_quantity"
+                                           string="Goods Qty to Release"/>
+                                    <field name="payment_amount" string="Payment Amount"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="interest" string="Interest Portion"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="outstanding_after" string="Outstanding After"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="notes" string="Notes"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!--   MERCHANDISE LOAN — GRAPH VIEW              -->
+    <!-- ============================================ -->
+    <record id="view_merchandise_loan_graph" model="ir.ui.view">
+        <field name="name">merchandise.loan.graph</field>
+        <field name="model">merchandise.loan</field>
+        <field name="arch" type="xml">
+            <graph string="Merchandise Loans" type="bar">
+                <field name="bank_id" type="row"/>
+                <field name="bank_amount" type="measure"/>
+                <field name="outstanding_loan" type="measure"/>
+                <field name="total_paid" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!--   MERCHANDISE LOAN — PIVOT VIEW              -->
+    <!-- ============================================ -->
+    <record id="view_merchandise_loan_pivot" model="ir.ui.view">
+        <field name="name">merchandise.loan.pivot</field>
+        <field name="model">merchandise.loan</field>
+        <field name="arch" type="xml">
+            <pivot string="Merchandise Loans">
+                <field name="bank_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="bank_amount" type="measure"/>
+                <field name="outstanding_loan" type="measure"/>
+                <field name="total_paid" type="measure"/>
+                <field name="total_interest" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+</odoo>

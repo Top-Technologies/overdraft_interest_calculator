@@ -1,0 +1,219 @@
+/* ================================================
+   Loan Management Dashboard — Styles
+   ================================================ */
+
+.loan-dashboard {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: #f0f4f8;
+    min-height: 100%;
+    height: 100%;
+    width: 100%;
+    padding: 24px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+/* ── Top Bar ── */
+.ld-topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Tabs ── */
+.ld-tabs {
+    display: flex;
+    gap: 8px;
+    background: #f0f4f8;
+    border-radius: 10px;
+    padding: 4px;
+    flex-wrap: wrap;
+}
+
+.ld-tab {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ld-tab:hover {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.ld-tab.active {
+    background: #fff;
+    color: #4f46e5;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Filters ── */
+.ld-filters {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+.ld-filters select,
+.ld-filters input[type="date"] {
+    padding: 7px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #334155;
+    background: #f8fafc;
+    cursor: pointer;
+}
+
+.ld-filters button {
+    padding: 7px 16px;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ld-filters button:hover {
+    background: #4338ca;
+}
+
+/* ── Loading ── */
+.ld-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    font-size: 16px;
+    color: #94a3b8;
+}
+
+/* ── KPI Grid ── */
+.ld-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.ld-kpi-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #4f46e5;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ld-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.ld-kpi-card.green {
+    border-left-color: #10b981;
+}
+
+.ld-kpi-card.amber {
+    border-left-color: #f59e0b;
+}
+
+.ld-kpi-card.red {
+    border-left-color: #ef4444;
+}
+
+.ld-kpi-card.blue {
+    border-left-color: #3b82f6;
+}
+
+.ld-kpi-card.purple {
+    border-left-color: #8b5cf6;
+}
+
+.ld-kpi-card.teal {
+    border-left-color: #14b8a6;
+}
+
+.ld-kpi-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.ld-kpi-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1;
+}
+
+.ld-kpi-sub {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 6px;
+}
+
+/* ── Chart Panels ── */
+.ld-chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+    .ld-chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ld-chart-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ld-chart-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 16px;
+}
+
+.ld-gauge-center {
+    position: relative;
+    text-align: center;
+}
+
+.ld-gauge-label {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1e293b;
+    margin-top: -10px;
+}
+
+.ld-gauge-sub {
+    font-size: 12px;
+    color: #94a3b8;
+}

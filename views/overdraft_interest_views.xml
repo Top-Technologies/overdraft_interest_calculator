@@ -11,13 +11,16 @@
                 <field name="name" string="Reference"/>
                 <field name="bank_journal_id" string="Bank Journal"/>
                 <field name="bank_id" string="Bank"/>
-                <field name="date" string="Start Date"/>
-                <field name="due_date" string="End Date" optional="show"/>
+                <field name="date_from" string="Start Date"/>
+                <field name="date_to" string="End Date"/>
                 <field name="currency_id" column_invisible="1"/>
                 <field name="overdraft_limit" string="Overdraft Limit"
                        widget="monetary"
                        options="{'currency_field': 'currency_id'}"/>
-                <field name="remaining_overdraft" string="Remaining"
+                <field name="current_balance" string="Current Balance"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+                <field name="total_interest" string="Total Interest"
                        widget="monetary"
                        options="{'currency_field': 'currency_id'}"
                        optional="show"/>
@@ -42,10 +45,21 @@
             <form string="Overdraft Interest">
                 <!-- Workflow Buttons -->
                 <header>
+                    <!-- Calculate / Recalculate Amortization Button -->
+                    <button name="action_calculate_amortization"
+                            string="Calculate Amortization"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="is_calculated or state == 'closed'"/>
+                    <button name="action_calculate_amortization"
+                            string="Recalculate Amortization"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="not is_calculated or state == 'closed'"/>
+
                     <button name="action_submit"
                             string="Submit for Approval"
                             type="object"
-                            class="oe_highlight"
                             invisible="state != 'draft'"/>
                     <button name="action_approve"
                             string="Approve"
@@ -68,12 +82,37 @@
                             type="object"
                             invisible="state != 'approved'"
                             groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_create_bill"
+                            string="Create Bill"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state not in ('approved',)"/>
+                    <button name="action_record_payment"
+                            string="Record Payment"
+                            type="object"
+                            invisible="state not in ('approved',)"/>
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="draft,submitted,approved,closed"/>
                 </header>
 
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_moves"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-book">
+                            <field name="move_count" widget="statinfo"
+                                   string="Journal Entries"/>
+                        </button>
+                        <button name="action_view_bills"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-pencil-square-o">
+                            <field name="bill_count" widget="statinfo"
+                                   string="Bills"/>
+                        </button>
+                    </div>
                     <!-- Reference Title -->
                     <div class="oe_title">
                         <h1>
@@ -88,52 +127,70 @@
                                    options="{'no_create': True}"
                                    readonly="state in ('approved', 'closed')"/>
                             <field name="bank_id" readonly="1" force_save="1"/>
-                            <field name="date" string="Start Date"
+                            <field name="date_from" string="Start Date"
                                    readonly="state in ('approved', 'closed')"/>
-                            <field name="due_date" string="End Date"
-                                   readonly="state == 'closed'"/>
+                            <field name="date_to" string="End Date"
+                                   readonly="state in ('approved', 'closed')"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                         <group string="Rates &amp; Limits">
-                            <field name="daily_interest_rate"
-                                   string="Daily Interest Rate (%)"
-                                   widget="percentage"
+                            <field name="annual_interest_rate"
+                                   string="Annual Interest Rate (%)"
                                    readonly="state == 'closed'"/>
-                            <field name="daily_penalty_rate"
-                                   string="Daily Penalty Rate (%)"
-                                   widget="percentage"
+                            <field name="annual_penalty_rate"
+                                   string="Annual Penalty Rate (%)"
                                    readonly="state == 'closed'"/>
                             <field name="overdraft_limit"
                                    widget="monetary"
                                    options="{'currency_field': 'currency_id'}"
                                    readonly="state in ('approved', 'closed')"/>
+                            <field name="is_calculated" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Account Fields -->
+                    <group>
+                        <group string="Account Entries">
+                            <field name="account_receivable_id"
+                                   readonly="state == 'closed'"/>
+                            <field name="account_payable_id"
+                                   readonly="state == 'closed'"/>
+                        </group>
+                        <group string="Account Properties">
+                            <field name="income_account_id"
+                                   readonly="state == 'closed'"/>
+                            <field name="expense_account_id"
+                                   readonly="state == 'closed'"/>
                         </group>
                     </group>
 
                     <!-- Tabs -->
                     <notebook>
-                        <!-- Tab 1: Overdraft Entries -->
-                        <page string="Overdraft Entries">
+                        <!-- Tab 1: Daily Entries -->
+                        <page string="Daily Entries">
                             <field name="overdraft_line_ids">
                                 <list editable="bottom">
                                     <field name="currency_id" column_invisible="1"/>
-                                    <field name="date" string="Date"/>
-                                    <field name="amount" string="Amount"/>
-                                    <field name="interest" string="Interest"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1" force_save="1"/>
-                                    <field name="penalty" string="Penalty"
+                                    <field name="date" string="Date" readonly="1"/>
+                                    <field name="debit" string="Debit"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"/>
                                     <field name="payment" string="Payment"
                                            widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"/>
-                                    <field name="total_balance" string="Total"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="balance" string="Balance"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
                                            readonly="1"/>
-                                    <field name="remaining_balance" string="Remaining"
+                                    <field name="daily_interest" string="Daily Interest"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="penalty" string="Extra Interest"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="cumulative_interest" string="Cumulative Interest"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
                                            readonly="1"/>
@@ -141,11 +198,39 @@
                             </field>
                         </page>
 
-
+                        <!-- Tab 2: Summary -->
+                        <page string="Summary">
+                            <group>
+                                <group string="Totals">
+                                    <field name="total_debit" string="Total Debit"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="total_payment" string="Total Payment"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                </group>
+                                <group string="Interest">
+                                    <field name="total_interest" string="Total Interest"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="total_penalty" string="Total Penalty"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="current_balance" string="Current Balance"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
 
-                <!-- Chatter (Odoo 18 style) -->
+                <!-- Chatter -->
                 <chatter/>
             </form>
         </field>
@@ -153,6 +238,7 @@
 
     <!-- ============================================ -->
     <!--   STATUS DASHBOARD — LIST VIEW               -->
+    <!--   (kept to update orphaned DB record)        -->
     <!-- ============================================ -->
     <record id="view_overdraft_status_list" model="ir.ui.view">
         <field name="name">overdraft.interest.status.list</field>
@@ -161,15 +247,15 @@
             <list string="Overdraft Status" create="false" edit="false" delete="false">
                 <field name="name" string="Reference"/>
                 <field name="bank_journal_id" string="Bank Journal"/>
-                <field name="due_date" string="End Date"/>
+                <field name="date_to" string="End Date"/>
                 <field name="currency_id" column_invisible="1"/>
-                <field name="total_outstanding" string="Total Outstanding"
+                <field name="total_interest" string="Total Interest"
                        widget="monetary"
                        options="{'currency_field': 'currency_id'}"/>
-                <field name="projected_daily_interest" string="Projected Interest"
+                <field name="total_penalty" string="Total Penalty"
                        widget="monetary"
                        options="{'currency_field': 'currency_id'}"/>
-                <field name="remaining_overdraft" string="Remaining"
+                <field name="current_balance" string="Current Balance"
                        widget="monetary"
                        options="{'currency_field': 'currency_id'}"/>
                 <field name="state" string="Status"

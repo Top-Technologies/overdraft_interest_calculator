@@ -3,7 +3,7 @@
     <data noupdate="1">
         <!-- Module Category -->
         <record id="module_category_overdraft" model="ir.module.category">
-            <field name="name">Overdraft Management</field>
+            <field name="name">Loan Management</field>
             <field name="sequence">50</field>
         </record>
 

@@ -8,5 +8,28 @@
             <field name="padding">4</field>
             <field name="company_id" eval="False"/>
         </record>
+
+        <record id="seq_term_loan" model="ir.sequence">
+            <field name="name">Term Loan</field>
+            <field name="code">term.loan</field>
+            <field name="prefix">TL/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        <record id="seq_merchandise_loan" model="ir.sequence">
+            <field name="name">Merchandise Loan</field>
+            <field name="code">merchandise.loan</field>
+            <field name="prefix">MRL/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_preshipment_loan" model="ir.sequence">
+            <field name="name">Pre-Shipment Loan</field>
+            <field name="code">preshipment.loan</field>
+            <field name="prefix">PSL/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
     </data>
 </odoo>
