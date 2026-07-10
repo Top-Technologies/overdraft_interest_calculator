@@ -1,0 +1,53 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Odoo Specific ---
+# Ignore the configuration file
+odoo.conf
+.odoorc
+# Ignore local file store (filestore/session data)
+/filestore/
+/sessions/
+*.log
+
+# --- IDE / Editors ---
+# VS Code
+.vscode/
+# PyCharm
+.idea/
+# Mac OS
+.DS_Store
+
+# --- Virtual Environments ---
+# Commonly used names for virtual envs
+venv/
+env/
+ENV/
+odoo-env/
+env.bak/
+venv.bak/
+
+# --- Temporary/System Files ---
+*.swp
+*.swo
+*~

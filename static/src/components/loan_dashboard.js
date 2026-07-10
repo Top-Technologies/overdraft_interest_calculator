@@ -21,6 +21,7 @@ export class LoanDashboard extends Component {
                 merchandise: null,
                 preshipment: null,
             },
+            selectedOdLoans: [],
             loading: true,
             error: null,
         });
@@ -74,51 +75,96 @@ export class LoanDashboard extends Component {
         this.state.loading = false;
     }
 
-    // ── OVERDRAFT ────────────────────────────────────────────────────────────
+    // ── OVERDRAFT ───────────────────────────────────────────────────────────────────────
     async _loadOverdraftData() {
         try {
             const domain = this._buildDomain("date_from");
             const records = await this.orm.searchRead(
                 "overdraft.interest",
                 [["state", "in", ["approved"]], ...domain],
-                ["overdraft_limit", "current_balance", "total_interest", "total_penalty", "bank_id"]
+                ["overdraft_limit", "current_balance", "current_utilization",
+                 "available_balance", "interest_charged",
+                 "total_interest", "total_penalty", "bank_id"]
             );
-            let totalLimit = 0, totalUsed = 0, totalInterest = 0, totalPenalty = 0;
+            let totalLimit = 0, totalUsed = 0, totalInterest = 0, totalPenalty = 0,
+                totalInterestCharged = 0, totalAvailable = 0;
             records.forEach(r => {
                 totalLimit += r.overdraft_limit || 0;
-                totalUsed += r.current_balance || 0;
+                totalUsed += r.current_utilization || 0;
                 totalInterest += r.total_interest || 0;
                 totalPenalty += r.total_penalty || 0;
+                totalInterestCharged += r.interest_charged || 0;
+                totalAvailable += r.available_balance || 0;
             });
-            const totalRemaining = Math.max(totalLimit - totalUsed, 0);
+            const totalRemaining = totalAvailable || Math.max(totalLimit - totalUsed, 0);
 
             // Daily/weekly interest from lines
             let dailyInterest = 0, weeklyInterest = 0;
+            let trendDataByOd = {};
+            let trendLabels = [];
             try {
                 const lineDomain = this.state.selectedBank
                     ? [["overdraft_id.bank_id", "=", parseInt(this.state.selectedBank)]]
                     : [];
                 const lines = await this.orm.searchRead(
                     "overdraft.line", lineDomain,
-                    ["daily_interest", "date"]
+                    ["daily_interest", "date", "balance", "overdraft_id"],
+                    { order: "date asc" }
                 );
-                dailyInterest = lines.length ? (lines[lines.length - 1].daily_interest || 0) : 0;
-                weeklyInterest = lines.slice(-7).reduce((s, l) => s + (l.daily_interest || 0), 0);
+
+                // Group by overdraft
+                lines.forEach(l => {
+                    if (!l.overdraft_id) return;
+                    const odId = l.overdraft_id[0];
+                    const odName = l.overdraft_id[1];
+                    if (!trendDataByOd[odId]) {
+                        trendDataByOd[odId] = { name: odName, data: [] };
+                    }
+                    trendDataByOd[odId].data.push(l);
+                });
+
+                // Compute global daily and weekly interest
+                Object.values(trendDataByOd).forEach(od => {
+                    if (od.data.length) dailyInterest += od.data[od.data.length - 1].daily_interest || 0;
+                    weeklyInterest += od.data.slice(-7).reduce((s, x) => s + (x.daily_interest || 0), 0);
+                });
+
+                // Extract all unique dates for common labels
+                let allDates = new Set();
+                lines.forEach(l => allDates.add(l.date));
+                let allSortedDates = Array.from(allDates).sort();
+
+                // Sample dates to prevent overcrowding
+                const step = Math.max(1, Math.floor(allSortedDates.length / 60));
+                allSortedDates.forEach((lbl, i) => {
+                    if (i % step === 0 || i === allSortedDates.length - 1) {
+                        trendLabels.push(lbl);
+                    }
+                });
+
+                // On first load, select all ODs
+                if (this.state.selectedOdLoans.length === 0) {
+                    this.state.selectedOdLoans = Object.keys(trendDataByOd).map(id => parseInt(id));
+                }
             } catch (e) {
                 console.warn("Dashboard: overdraft lines error", e);
             }
 
             this.state.data.overdraft = {
                 totalLimit, totalUsed, totalRemaining, totalInterest, totalPenalty,
+                totalInterestCharged,
                 dailyInterest, weeklyInterest,
                 usedPercent: totalLimit ? Math.round((totalUsed / totalLimit) * 100) : 0,
+                trendLabels, trendDataByOd,
             };
+
         } catch (e) {
             console.warn("Dashboard: overdraft error", e);
             this.state.data.overdraft = {
                 totalLimit: 0, totalUsed: 0, totalRemaining: 0,
-                totalInterest: 0, totalPenalty: 0,
+                totalInterest: 0, totalPenalty: 0, totalInterestCharged: 0,
                 dailyInterest: 0, weeklyInterest: 0, usedPercent: 0,
+                trendLabels: [], trendBalances: [], trendInterests: [],
             };
         }
     }
@@ -294,14 +340,17 @@ export class LoanDashboard extends Component {
         }
     }
 
-    // ── CHART RENDERING ──────────────────────────────────────────────────────
+    // ── CHART RENDERING ─────────────────────────────────────────────────────
     _renderCharts() {
         Object.values(this.chartInstances).forEach(c => c && c.destroy());
         this.chartInstances = {};
 
         setTimeout(() => {
             try {
-                if (this.state.activeTab === "overdraft") this._renderGaugeChart();
+                if (this.state.activeTab === "overdraft") {
+                    this._renderGaugeChart();
+                    this._renderOdTrendChart();
+                }
                 if (this.state.activeTab === "term_loan") {
                     this._renderTermLoanChart();
                     this._renderYearlyLoanChart();
@@ -362,6 +411,31 @@ export class LoanDashboard extends Component {
         });
     }
 
+    toggleOdLoan(odId, checked) {
+        odId = parseInt(odId);
+        if (checked) {
+            if (!this.state.selectedOdLoans.includes(odId)) {
+                this.state.selectedOdLoans.push(odId);
+            }
+        } else {
+            this.state.selectedOdLoans = this.state.selectedOdLoans.filter(id => id !== odId);
+        }
+        this._renderOdTrendChart();
+    }
+
+    toggleAllOdLoans(checked) {
+        if (checked && this.state.data.overdraft) {
+            this.state.selectedOdLoans = Object.keys(this.state.data.overdraft.trendDataByOd).map(id => parseInt(id));
+        } else {
+            this.state.selectedOdLoans = [];
+        }
+        this._renderOdTrendChart();
+    }
+
+    isOdSelected(odId) {
+        return this.state.selectedOdLoans.includes(parseInt(odId, 10));
+    }
+
     _renderGaugeChart() {
         const d = this.state.data.overdraft;
         if (!d) return;
@@ -385,6 +459,122 @@ export class LoanDashboard extends Component {
                 plugins: {
                     legend: { position: "bottom" },
                     tooltip: { callbacks: { label: (c) => this._fmt(c.raw) } },
+                },
+            },
+        });
+    }
+
+    _renderOdTrendChart() {
+        const d = this.state.data.overdraft;
+        if (!d || !d.trendDataByOd) return;
+        const canvas = document.getElementById("odDailyTrendChart");
+        if (!canvas) return;
+
+        if (this.chartInstances.odTrend) {
+            this.chartInstances.odTrend.destroy();
+            this.chartInstances.odTrend = null;
+        }
+
+        // Only include selected loans
+        const selectedOdKeys = Object.keys(d.trendDataByOd).filter(k => this.state.selectedOdLoans.includes(parseInt(k)));
+        
+        // Dynamically compute common labels based only on selected loans
+        let activeDates = new Set();
+        selectedOdKeys.forEach(k => {
+            d.trendDataByOd[k].data.forEach(l => activeDates.add(l.date));
+        });
+        let activeSortedDates = Array.from(activeDates).sort();
+
+        // Sample if necessary
+        const step = Math.max(1, Math.floor(activeSortedDates.length / 60));
+        let activeLabels = [];
+        activeSortedDates.forEach((lbl, i) => {
+            if (i % step === 0 || i === activeSortedDates.length - 1) {
+                activeLabels.push(lbl);
+            }
+        });
+
+        // Format labels as short dates
+        const labels = activeLabels.map(dt => {
+            const [y, m, day] = dt.split("-");
+            return `${parseInt(day)}/${parseInt(m)}`;
+        });
+
+        const datasets = [];
+        const colors = ["#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#a855f7", "#ec4899", "#06b6d4"];
+        let colorIdx = 0;
+
+        selectedOdKeys.forEach(odId => {
+            const od = d.trendDataByOd[odId];
+            const color = colors[colorIdx % colors.length];
+            colorIdx++;
+
+            let balanceData = [];
+            let interestData = [];
+            
+            activeLabels.forEach(lbl => {
+                const line = od.data.find(l => l.date === lbl);
+                balanceData.push(line ? (line.balance || 0) : null);
+                interestData.push(line ? (line.daily_interest || 0) : null);
+            });
+
+            // Balance Dataset
+            datasets.push({
+                label: od.name + " Balance",
+                data: balanceData,
+                borderColor: color,
+                backgroundColor: color + "1a",
+                fill: false,
+                tension: 0.35,
+                pointRadius: balanceData.length > 60 ? 0 : 3,
+                spanGaps: true,
+                borderWidth: 2,
+                yAxisID: "yBalance",
+            });
+            // Interest Dataset
+            datasets.push({
+                label: od.name + " Daily Interest",
+                data: interestData,
+                borderColor: color,
+                backgroundColor: color + "1a",
+                fill: false,
+                tension: 0.35,
+                pointRadius: interestData.length > 60 ? 0 : 3,
+                spanGaps: true,
+                borderWidth: 1.5,
+                borderDash: [4, 3],
+                yAxisID: "yInterest",
+            });
+        });
+
+        this.chartInstances.odTrend = new this.Chart(canvas, {
+            type: "line",
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                interaction: { mode: "index", intersect: false },
+                plugins: {
+                    legend: { position: "right" },
+                    tooltip: {
+                        callbacks: {
+                            label: (c) => `${c.dataset.label}: ${this._fmt(c.raw)}`,
+                        },
+                    },
+                },
+                scales: {
+                    yBalance: {
+                        type: "linear",
+                        position: "left",
+                        ticks: { callback: v => this._fmt(v) },
+                        title: { display: true, text: "Balance" },
+                    },
+                    yInterest: {
+                        type: "linear",
+                        position: "right",
+                        grid: { drawOnChartArea: false },
+                        ticks: { callback: v => this._fmt(v) },
+                        title: { display: true, text: "Daily Interest" },
+                    },
                 },
             },
         });

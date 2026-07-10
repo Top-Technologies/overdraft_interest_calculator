@@ -82,6 +82,11 @@
                             type="object"
                             invisible="state != 'approved'"
                             groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                    <button name="action_reopen"
+                            string="Revert to Approved (Test)"
+                            type="object"
+                            invisible="state != 'closed'"
+                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
                     <button name="action_create_bill"
                             string="Create Bill"
                             type="object"
@@ -127,6 +132,9 @@
                                    options="{'no_create': True}"
                                    readonly="state in ('approved', 'closed')"/>
                             <field name="bank_id" readonly="1" force_save="1"/>
+                            <field name="od_account_number"
+                                   readonly="state in ('approved', 'closed')"
+                                   placeholder="e.g. 1000123456789"/>
                             <field name="date_from" string="Start Date"
                                    readonly="state in ('approved', 'closed')"/>
                             <field name="date_to" string="End Date"
@@ -201,22 +209,42 @@
                         <!-- Tab 2: Summary -->
                         <page string="Summary">
                             <group>
-                                <group string="Totals">
-                                    <field name="total_debit" string="Total Debit"
+                                <group string="Facility Status">
+                                    <field name="overdraft_limit"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
                                            readonly="1"/>
-                                    <field name="total_payment" string="Total Payment"
+                                    <field name="current_utilization" string="Current Utilization"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="available_balance" string="Available Balance"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
                                            readonly="1"/>
                                 </group>
-                                <group string="Interest">
+                                <group string="Interest &amp; Cost">
                                     <field name="total_interest" string="Total Interest"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
                                            readonly="1"/>
                                     <field name="total_penalty" string="Total Penalty"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="interest_charged" string="Interest Charged (Period)"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Cash Flow">
+                                    <field name="total_debit" string="Total Debit"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="total_payment" string="Total Payment"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
                                            readonly="1"/>
@@ -227,7 +255,24 @@
                                 </group>
                             </group>
                         </page>
+
+                        <!-- Tab 3: Purpose & Collateral -->
+                        <page string="Purpose &amp; Collateral">
+                            <group>
+                                <group string="Facility Purpose" colspan="2">
+                                    <field name="purpose"
+                                           placeholder="Describe the intended use of this overdraft facility…"
+                                           nolabel="1"
+                                           colspan="2"/>
+                                </group>
+                            </group>
+                            <separator string="Collateral / Security Documents"/>
+                            <field name="collateral_document_ids"
+                                   widget="many2many_binary"
+                                   string="Attach Collateral / Security Documents"/>
+                        </page>
                     </notebook>
+
                 </sheet>
 
                 <!-- Chatter -->

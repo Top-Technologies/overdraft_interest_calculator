@@ -19,3 +19,5 @@ access_overdraft_payment_wizard_user,overdraft.payment.wizard.user,model_overdra
 access_overdraft_payment_wizard_manager,overdraft.payment.wizard.manager,model_overdraft_payment_wizard,group_overdraft_manager,1,1,1,1
 access_term_loan_payment_wizard_user,term.loan.payment.wizard.user,model_term_loan_payment_wizard,group_overdraft_user,1,1,1,0
 access_term_loan_payment_wizard_manager,term.loan.payment.wizard.manager,model_term_loan_payment_wizard,group_overdraft_manager,1,1,1,1
+access_overdraft_close_wizard_user,overdraft.close.wizard.user,model_overdraft_close_wizard,group_overdraft_user,1,1,1,0
+access_overdraft_close_wizard_manager,overdraft.close.wizard.manager,model_overdraft_close_wizard,group_overdraft_manager,1,1,1,1

@@ -53,20 +53,20 @@
                         <div class="ld-kpi-sub">Combined limit across all banks</div>
                     </div>
                     <div class="ld-kpi-card red">
-                        <div class="ld-kpi-label">Total Used (Overdrawn)</div>
+                        <div class="ld-kpi-label">Current Utilization</div>
                         <div class="ld-kpi-value">
                             <t t-esc="this._fmt(state.data.overdraft.totalUsed)"/>
                         </div>
                         <div class="ld-kpi-sub">
-                            <t t-esc="state.data.overdraft.usedPercent"/>% of limit consumed
+                            <t t-esc="state.data.overdraft.usedPercent"/>% of limit drawn
                         </div>
                     </div>
                     <div class="ld-kpi-card green">
-                        <div class="ld-kpi-label">Remaining Headroom</div>
+                        <div class="ld-kpi-label">Available Balance</div>
                         <div class="ld-kpi-value">
                             <t t-esc="this._fmt(state.data.overdraft.totalRemaining)"/>
                         </div>
-                        <div class="ld-kpi-sub">Available overdraft capacity</div>
+                        <div class="ld-kpi-sub">Remaining overdraft capacity</div>
                     </div>
                     <div class="ld-kpi-card amber">
                         <div class="ld-kpi-label">Cumulative Interest</div>
@@ -74,6 +74,13 @@
                             <t t-esc="this._fmt(state.data.overdraft.totalInterest)"/>
                         </div>
                         <div class="ld-kpi-sub">Total interest accrued</div>
+                    </div>
+                    <div class="ld-kpi-card orange" style="--kpi-accent:#f97316">
+                        <div class="ld-kpi-label">Interest Charged (Period)</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="this._fmt(state.data.overdraft.totalInterestCharged)"/>
+                        </div>
+                        <div class="ld-kpi-sub">Interest + Penalty this period</div>
                     </div>
                     <div class="ld-kpi-card purple">
                         <div class="ld-kpi-label">Daily Interest (Latest)</div>
@@ -92,7 +99,7 @@
                 </div>
                 <div class="ld-chart-grid">
                     <div class="ld-chart-card">
-                        <div class="ld-chart-title">Limit vs Used vs Remaining</div>
+                        <div class="ld-chart-title">Limit vs Utilization vs Headroom</div>
                         <div class="ld-gauge-center">
                             <canvas id="overdraftGaugeChart" height="200"/>
                             <div class="ld-gauge-label">
@@ -100,6 +107,37 @@
                             </div>
                             <div class="ld-gauge-sub">of limit used</div>
                         </div>
+                    </div>
+                    <div class="ld-chart-card">
+                        <div class="ld-chart-title">📈 Daily OD Balance &amp; Interest Trend</div>
+                        <t t-if="state.data.overdraft.trendLabels and state.data.overdraft.trendLabels.length">
+                            
+                            <!-- OD Filters -->
+                            <div class="ld-od-filters" style="margin-bottom: 12px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: #f8fafc; padding: 10px; border-radius: 8px;">
+                                <span style="font-weight: 600; color: #475569;">Show Loans:</span>
+                                <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" 
+                                           t-on-change="(e) => this.toggleAllOdLoans(e.target.checked)" 
+                                           t-att-checked="state.selectedOdLoans.length === Object.keys(state.data.overdraft.trendDataByOd).length"/> 
+                                    All
+                                </label>
+                                <t t-foreach="Object.keys(state.data.overdraft.trendDataByOd)" t-as="odId" t-key="odId">
+                                    <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                        <input type="checkbox" 
+                                               t-on-change="(e) => this.toggleOdLoan(odId, e.target.checked)" 
+                                               t-att-checked="this.isOdSelected(odId)"/> 
+                                        <t t-esc="state.data.overdraft.trendDataByOd[odId].name"/>
+                                    </label>
+                                </t>
+                            </div>
+
+                            <canvas id="odDailyTrendChart" height="240"/>
+                        </t>
+                        <t t-else="">
+                            <div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px;">
+                                No daily data available. Calculate amortization on an approved overdraft to see the trend.
+                            </div>
+                        </t>
                     </div>
                 </div>
             </t>

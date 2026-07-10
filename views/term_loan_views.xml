@@ -236,7 +236,24 @@
                                 </list>
                             </field>
                         </page>
+
+                        <!-- Tab: Purpose & Collateral -->
+                        <page string="Purpose &amp; Collateral">
+                            <group>
+                                <group string="Loan Purpose" colspan="2">
+                                    <field name="purpose"
+                                           placeholder="Describe the intended use of these loan funds…"
+                                           nolabel="1"
+                                           colspan="2"/>
+                                </group>
+                            </group>
+                            <separator string="Collateral Documents"/>
+                            <field name="collateral_document_ids"
+                                   widget="many2many_binary"
+                                   string="Attach Collateral Documents"/>
+                        </page>
                     </notebook>
+
 
                     <field name="currency_id" invisible="1"/>
                 </sheet>

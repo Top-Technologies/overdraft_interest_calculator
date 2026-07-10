@@ -162,6 +162,23 @@ class MerchandiseLoan(models.Model):
     )
 
     # -------------------------------------------------------------------------
+    # FIELDS — Purpose & Collateral
+    # -------------------------------------------------------------------------
+    purpose = fields.Text(
+        string='Purpose',
+        tracking=True,
+        help='Intended use of this merchandise loan (e.g. import of plastic raw materials, vehicle acquisition).',
+    )
+    collateral_document_ids = fields.Many2many(
+        'ir.attachment',
+        'merchandise_loan_collateral_attachment_rel',
+        'loan_id',
+        'attachment_id',
+        string='Collateral Documents',
+        help='Attach collateral documents such as import invoices, warehouse receipts, or guarantees.',
+    )
+
+    # -------------------------------------------------------------------------
     # FIELDS — Computed Totals
     # -------------------------------------------------------------------------
     total_paid = fields.Monetary(

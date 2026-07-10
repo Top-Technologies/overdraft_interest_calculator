@@ -125,6 +125,23 @@ class TermLoan(models.Model):
     )
 
     # -------------------------------------------------------------------------
+    # FIELDS — Purpose & Collateral
+    # -------------------------------------------------------------------------
+    purpose = fields.Text(
+        string='Purpose',
+        tracking=True,
+        help='Intended use of the loan funds as approved by the lender.',
+    )
+    collateral_document_ids = fields.Many2many(
+        'ir.attachment',
+        'term_loan_collateral_attachment_rel',
+        'loan_id',
+        'attachment_id',
+        string='Collateral Documents',
+        help='Attach documents for pledged collateral (e.g. property deeds, vehicle certificates, guarantees).',
+    )
+
+    # -------------------------------------------------------------------------
     # FIELDS — Schedule Lines
     # -------------------------------------------------------------------------
     loan_line_ids = fields.One2many(

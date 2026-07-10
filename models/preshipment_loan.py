@@ -153,6 +153,23 @@ class PreShipmentLoan(models.Model):
     )
 
     # -------------------------------------------------------------------------
+    # FIELDS — Purpose & Collateral
+    # -------------------------------------------------------------------------
+    purpose = fields.Text(
+        string='Purpose',
+        tracking=True,
+        help='Intended use of the pre-shipment loan (e.g. sesame procurement, soya meal processing).',
+    )
+    collateral_document_ids = fields.Many2many(
+        'ir.attachment',
+        'preshipment_loan_collateral_attachment_rel',
+        'loan_id',
+        'attachment_id',
+        string='Collateral Documents',
+        help='Attach export contracts, LC documents, guarantees, or other collateral documents.',
+    )
+
+    # -------------------------------------------------------------------------
     # FIELDS — Interest & Penalty
     # -------------------------------------------------------------------------
     annual_interest_rate = fields.Float(

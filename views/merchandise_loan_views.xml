@@ -207,7 +207,24 @@
                                 </list>
                             </field>
                         </page>
+
+                        <!-- Purpose & Collateral Tab -->
+                        <page string="Purpose &amp; Collateral">
+                            <group>
+                                <group string="Loan Purpose" colspan="2">
+                                    <field name="purpose"
+                                           placeholder="Describe the intended use (e.g. import of plastic raw materials for packaging)…"
+                                           nolabel="1"
+                                           colspan="2"/>
+                                </group>
+                            </group>
+                            <separator string="Collateral Documents"/>
+                            <field name="collateral_document_ids"
+                                   widget="many2many_binary"
+                                   string="Attach Collateral Documents"/>
+                        </page>
                     </notebook>
+
                 </sheet>
                 <chatter/>
             </form>

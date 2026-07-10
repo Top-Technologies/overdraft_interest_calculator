@@ -99,6 +99,30 @@ class OverdraftInterest(models.Model):
         help='Maximum allowed negative balance (enter as positive value)',
     )
 
+    # OD Account Number
+    od_account_number = fields.Char(
+        string='OD Account Number',
+        tracking=True,
+        help='Bank account number linked to the overdraft facility.',
+    )
+
+    # Purpose
+    purpose = fields.Text(
+        string='Purpose',
+        tracking=True,
+        help='Intended business use of the overdraft facility (e.g. working capital, procurement bridging).',
+    )
+
+    # Collateral Documents
+    collateral_document_ids = fields.Many2many(
+        'ir.attachment',
+        'overdraft_collateral_attachment_rel',
+        'overdraft_id',
+        'attachment_id',
+        string='Collateral Documents',
+        help='Attach security/collateral documents for this overdraft facility.',
+    )
+
     # Calculation state
     is_calculated = fields.Boolean(
         string='Is Calculated',
@@ -197,6 +221,27 @@ class OverdraftInterest(models.Model):
         store=True,
         currency_field='currency_id',
     )
+    current_utilization = fields.Monetary(
+        string='Current Utilization',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+        help='Amount currently drawn from the overdraft facility (absolute value of overdrawn balance).',
+    )
+    available_balance = fields.Monetary(
+        string='Available Balance',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+        help='Remaining unused overdraft capacity: Approved Limit − Current Utilization.',
+    )
+    interest_charged = fields.Monetary(
+        string='Interest Charged (Period)',
+        compute='_compute_totals',
+        store=True,
+        currency_field='currency_id',
+        help='Total interest + penalty charged on the utilized overdraft balance for this period.',
+    )
 
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
@@ -230,6 +275,10 @@ class OverdraftInterest(models.Model):
                 record.current_balance = sorted_lines[-1].balance
             else:
                 record.current_balance = 0.0
+            # Derived fields
+            record.current_utilization = abs(min(record.current_balance, 0.0))
+            record.available_balance = max(record.overdraft_limit - record.current_utilization, 0.0)
+            record.interest_charged = record.total_interest + record.total_penalty
 
     # -------------------------------------------------------------------------
     # CRUD OVERRIDES
@@ -351,7 +400,21 @@ class OverdraftInterest(models.Model):
         for record in self:
             if record.state != 'approved':
                 raise UserError(_('Only approved records can be closed.'))
-            record.state = 'closed'
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Warning: Close Overdraft'),
+            'res_model': 'overdraft.close.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_overdraft_id': self.id}
+        }
+
+    def action_reopen(self):
+        for record in self:
+            if record.state != 'closed':
+                raise UserError(_('Only closed records can be reopened.'))
+            record.state = 'approved'
 
     # -------------------------------------------------------------------------
     # ACCOUNTING METHODS
