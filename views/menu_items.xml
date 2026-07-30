@@ -44,7 +44,8 @@
     <menuitem id="menu_overdraft_root"
               name="Loan Management"
               sequence="10"
-              web_icon="overdraft_interest_calculator,static/description/icon.png"/>
+              web_icon="overdraft_interest_calculator,static/description/icon.png"
+              groups="overdraft_interest_calculator.group_overdraft_viewer"/>
 
     <!-- Dashboard -->
     <menuitem id="menu_loan_dashboard"
@@ -77,4 +78,42 @@
               parent="menu_overdraft_root"
               action="action_preshipment_loan"
               sequence="40"/>
+
+    <!-- ============================================ -->
+    <!--   REPORTING SECTION                          -->
+    <!-- ============================================ -->
+    <menuitem id="menu_reporting"
+              name="Reporting"
+              parent="menu_overdraft_root"
+              sequence="45"/>
+
+    <menuitem id="menu_report_portfolio"
+              name="Loan Portfolio"
+              parent="menu_reporting"
+              action="action_server_report_portfolio"
+              sequence="10"/>
+
+    <menuitem id="menu_report_repayment"
+              name="Repayment Schedule"
+              parent="menu_reporting"
+              action="action_server_report_repayment"
+              sequence="20"/>
+
+    <menuitem id="menu_report_utilization"
+              name="Loan Utilization"
+              parent="menu_reporting"
+              action="action_server_report_utilization"
+              sequence="30"/>
+
+    <menuitem id="menu_report_maturity"
+              name="Loan Maturity"
+              parent="menu_reporting"
+              action="action_server_report_maturity"
+              sequence="40"/>
+
+    <menuitem id="menu_report_exposure"
+              name="Loan Exposure"
+              parent="menu_reporting"
+              action="action_server_report_exposure"
+              sequence="50"/>
 </odoo>

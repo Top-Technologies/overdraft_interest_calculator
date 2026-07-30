@@ -12,6 +12,7 @@
                     <field name="overdraft_id" invisible="1"/>
                     <field name="currency_id" invisible="1"/>
                     <field name="date"/>
+                    <field name="payment_type" widget="radio"/>
                     <field name="amount" widget="monetary"
                            options="{'currency_field': 'currency_id'}"/>
                     <field name="memo"/>
@@ -38,8 +39,11 @@
                 <group>
                     <field name="loan_id" invisible="1"/>
                     <field name="currency_id" invisible="1"/>
+                    <field name="date"/>
                     <field name="line_id"
                            options="{'no_create': True, 'no_edit': True}"/>
+                    <field name="penalty_accrued"
+                           invisible="not penalty_accrued"/>
                     <field name="amount" widget="monetary"
                            options="{'currency_field': 'currency_id'}"/>
                     <field name="memo"/>
@@ -50,6 +54,33 @@
                             type="object"
                             class="oe_highlight"/>
                     <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <!-- ============================================ -->
+    <!--   OVERDRAFT CLOSE WIZARD                     -->
+    <!-- ============================================ -->
+    <record id="view_overdraft_close_wizard_form" model="ir.ui.view">
+        <field name="name">overdraft.close.wizard.form</field>
+        <field name="model">overdraft.close.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Warning">
+                <field name="step" invisible="1"/>
+                <div invisible="step != '1'" class="alert alert-warning" role="alert">
+                    <strong>Warning!</strong> You are about to close this OD loan.
+                    <br/><br/>
+                    Closing this loan is a permanent action for end users. You will not be able to edit it or record further payments once closed.
+                </div>
+                <div invisible="step != '2'" class="alert alert-danger" role="alert">
+                    <strong>FINAL WARNING!</strong>
+                    <br/><br/>
+                    This OD loan will be closed and you CANNOT open it back again or edit it. Are you absolutely sure you want to proceed?
+                </div>
+                <footer>
+                    <button name="action_next_step" type="object" string="Proceed" class="btn-warning" invisible="step != '1'"/>
+                    <button name="action_confirm_close" type="object" string="Yes, Close Permanently" class="btn-danger" invisible="step != '2'"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
                 </footer>
             </form>
         </field>

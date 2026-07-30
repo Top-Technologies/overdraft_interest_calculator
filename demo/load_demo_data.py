@@ -156,59 +156,59 @@ else:
 # ══════════════════════════════════════════════════════════════════════════════
 print("\n--- Creating Pre-Shipment Loan records ---")
 
-ps1 = env['preshipment.loan'].create({
-    'bank_journal_id': j1.id,
-    'loan_amount': 15_000_000,
-    'annual_interest_rate': 14.5,
-    'penalty_rate': 3.0,
-    'currency_id': currency.id,
-    'foreign_currency_id': foreign_curr.id,
-    'total_currency_to_store': 320_000,
-    'start_date': today - timedelta(days=60),
-    'expected_export_date': today + timedelta(days=90),
-    'financed_goods_description': 'Coffee export — Grade 1, 120 MT',
-    'financed_goods_value': 18_000_000,
-    'account_receivable_id': receivable.id if receivable else False,
-    'account_payable_id': payable.id if payable else False,
-    'income_account_id': income.id if income else False,
-    'expense_account_id': expense.id if expense else False,
-})
-env['preshipment.loan.line'].create([
-    {'loan_id': ps1.id, 'date': today - timedelta(days=55),
-     'amount_used': 5_000_000, 'currency_deposited': 0, 'interest': 19_863, 'penalty': 0},
-    {'loan_id': ps1.id, 'date': today - timedelta(days=30),
-     'amount_used': 7_000_000, 'currency_deposited': 80_000, 'interest': 27_808, 'penalty': 0},
-    {'loan_id': ps1.id, 'date': today - timedelta(days=10),
-     'amount_used': 3_000_000, 'currency_deposited': 50_000, 'interest': 11_918, 'penalty': 0},
-])
-ps1.state = 'active'
-print(f"  Created PS1: {ps1.name} — 15M ETB, {foreign_curr.name} 320K")
+# ps1 = env['preshipment.loan'].create({
+#     'bank_journal_id': j1.id,
+#     'loan_amount': 15_000_000,
+#     'annual_interest_rate': 14.5,
+#     'penalty_rate': 3.0,
+#     'currency_id': currency.id,
+#     'foreign_currency_id': foreign_curr.id,
+#     'total_currency_to_store': 320_000,
+#     'start_date': today - timedelta(days=60),
+#     'expected_export_date': today + timedelta(days=90),
+#     'financed_goods_description': 'Coffee export — Grade 1, 120 MT',
+#     'financed_goods_value': 18_000_000,
+#     'account_receivable_id': receivable.id if receivable else False,
+#     'account_payable_id': payable.id if payable else False,
+#     'income_account_id': income.id if income else False,
+#     'expense_account_id': expense.id if expense else False,
+# })
+# env['preshipment.loan.line'].create([
+#     {'loan_id': ps1.id, 'date': today - timedelta(days=55),
+#      'amount_used': 5_000_000, 'currency_deposited': 0, 'interest': 19_863, 'penalty': 0},
+#     {'loan_id': ps1.id, 'date': today - timedelta(days=30),
+#      'amount_used': 7_000_000, 'currency_deposited': 80_000, 'interest': 27_808, 'penalty': 0},
+#     {'loan_id': ps1.id, 'date': today - timedelta(days=10),
+#      'amount_used': 3_000_000, 'currency_deposited': 50_000, 'interest': 11_918, 'penalty': 0},
+# ])
+# ps1.state = 'active'
+# print(f"  Created PS1: {ps1.name} — 15M ETB, {foreign_curr.name} 320K")
 
-ps2 = env['preshipment.loan'].create({
-    'bank_journal_id': j2.id,
-    'loan_amount': 10_000_000,
-    'annual_interest_rate': 16.0,
-    'penalty_rate': 4.5,
-    'currency_id': currency.id,
-    'foreign_currency_id': foreign_curr.id,
-    'total_currency_to_store': 200_000,
-    'start_date': today - timedelta(days=30),
-    'expected_export_date': today + timedelta(days=60),
-    'financed_goods_description': 'Sesame seed export — 80 MT',
-    'financed_goods_value': 11_500_000,
-    'account_receivable_id': receivable.id if receivable else False,
-    'account_payable_id': payable.id if payable else False,
-    'income_account_id': income.id if income else False,
-    'expense_account_id': expense.id if expense else False,
-})
-env['preshipment.loan.line'].create([
-    {'loan_id': ps2.id, 'date': today - timedelta(days=25),
-     'amount_used': 6_000_000, 'currency_deposited': 30_000, 'interest': 26_301, 'penalty': 0},
-    {'loan_id': ps2.id, 'date': today - timedelta(days=10),
-     'amount_used': 4_000_000, 'currency_deposited': 20_000, 'interest': 17_534, 'penalty': 0},
-])
-ps2.state = 'active'
-print(f"  Created PS2: {ps2.name} — 10M ETB, {foreign_curr.name} 200K")
+# ps2 = env['preshipment.loan'].create({
+#     'bank_journal_id': j2.id,
+#     'loan_amount': 10_000_000,
+#     'annual_interest_rate': 16.0,
+#     'penalty_rate': 4.5,
+#     'currency_id': currency.id,
+#     'foreign_currency_id': foreign_curr.id,
+#     'total_currency_to_store': 200_000,
+#     'start_date': today - timedelta(days=30),
+#     'expected_export_date': today + timedelta(days=60),
+#     'financed_goods_description': 'Sesame seed export — 80 MT',
+#     'financed_goods_value': 11_500_000,
+#     'account_receivable_id': receivable.id if receivable else False,
+#     'account_payable_id': payable.id if payable else False,
+#     'income_account_id': income.id if income else False,
+#     'expense_account_id': expense.id if expense else False,
+# })
+# env['preshipment.loan.line'].create([
+#     {'loan_id': ps2.id, 'date': today - timedelta(days=25),
+#      'amount_used': 6_000_000, 'currency_deposited': 30_000, 'interest': 26_301, 'penalty': 0},
+#     {'loan_id': ps2.id, 'date': today - timedelta(days=10),
+#      'amount_used': 4_000_000, 'currency_deposited': 20_000, 'interest': 17_534, 'penalty': 0},
+# ])
+# ps2.state = 'active'
+# print(f"  Created PS2: {ps2.name} — 10M ETB, {foreign_curr.name} 200K")
 
-env.cr.commit()
-print("\n✅ All remaining demo data created and committed!")
+# env.cr.commit()
+# print("\n✅ All remaining demo data created and committed!")

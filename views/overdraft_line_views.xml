@@ -7,7 +7,7 @@
         <field name="name">overdraft.line.list</field>
         <field name="model">overdraft.line</field>
         <field name="arch" type="xml">
-            <list editable="bottom" string="Overdraft Daily Entries">
+            <list editable="bottom" string="Overdraft Daily Entries" create="false" delete="false">
                 <field name="currency_id" column_invisible="1"/>
                 <field name="date" string="Date"/>
                 <field name="debit" string="Debit"
@@ -17,6 +17,21 @@
                        widget="monetary"
                        options="{'currency_field': 'currency_id'}"
                        readonly="1"/>
+                <field name="interest_payment" string="Interest Payment"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"
+                       readonly="1"
+                       optional="show"/>
+                <field name="principal_payment" string="Principal Payment"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"
+                       readonly="1"
+                       optional="show"/>
+                <field name="penalty_payment" string="Penalty Payment"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"
+                       readonly="1"
+                       optional="show"/>
                 <field name="balance" string="Balance"
                        widget="monetary"
                        options="{'currency_field': 'currency_id'}"
@@ -25,9 +40,11 @@
                        widget="monetary"
                        options="{'currency_field': 'currency_id'}"
                        readonly="1"/>
-                <field name="penalty" string="Extra Interest"
+                <field name="penalty_accrued" string="Penalty Accrued"
                        widget="monetary"
-                       options="{'currency_field': 'currency_id'}"/>
+                       options="{'currency_field': 'currency_id'}"
+                       readonly="1"
+                       optional="hide"/>
                 <field name="cumulative_interest" string="Cumulative Interest"
                        widget="monetary"
                        options="{'currency_field': 'currency_id'}"

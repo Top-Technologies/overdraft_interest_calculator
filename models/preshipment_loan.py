@@ -1,6 +1,6 @@
 import logging
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -37,6 +37,14 @@ class PreShipmentLoan(models.Model):
         ('closed', 'Closed'),
     ], string='Status', default='draft', tracking=True, copy=False)
 
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company,
+        tracking=True,
+    )
+
     # -------------------------------------------------------------------------
     # FIELDS — Bank
     # -------------------------------------------------------------------------
@@ -69,6 +77,12 @@ class PreShipmentLoan(models.Model):
         required=True,
         tracking=True,
         help='Agreed date by which the foreign currency must be deposited to the bank',
+    )
+    end_date = fields.Date(
+        string='End Date',
+        tracking=True,
+        help='Loan maturity date — the final date by which the export loan must be '
+             'fully repaid or settled.',
     )
     currency_id = fields.Many2one(
         'res.currency',
@@ -138,18 +152,106 @@ class PreShipmentLoan(models.Model):
     )
 
     # -------------------------------------------------------------------------
-    # FIELDS — Financed Goods
+    # FIELDS — Sales Orders
     # -------------------------------------------------------------------------
-    financed_goods_description = fields.Text(
-        string='Financed Goods Description',
+    sale_order_ids = fields.Many2many(
+        'sale.order',
+        'preshipment_loan_sale_order_rel',
+        'loan_id',
+        'sale_order_id',
+        string='Sales Orders',
         tracking=True,
-        help='Description of the goods being produced/transported using this loan',
+        help='Sales orders linked to this pre-shipment loan. A loan may be linked '
+             'to one or more sales orders — create a new one or link an existing '
+             'one from this list.',
     )
-    financed_goods_value = fields.Monetary(
-        string='Financed Goods Value',
+    sale_order_count = fields.Integer(
+        string='Sales Order Count',
+        compute='_compute_sale_order_count',
+    )
+
+    # -------------------------------------------------------------------------
+    # FIELDS — Raw Material Financed
+    # -------------------------------------------------------------------------
+    raw_material_description = fields.Text(
+        string='Raw Material Description',
+        tracking=True,
+        help='Description of the raw materials financed under this loan facility.',
+    )
+    raw_material_qty = fields.Float(
+        string='Raw Material Quantity',
+        digits='Product Unit of Measure',
+        tracking=True,
+        help='Quantity of raw materials financed under the loan facility for '
+             'export preparation or production.',
+    )
+    raw_material_uom_id = fields.Many2one(
+        'uom.uom',
+        string='Unit of Measure',
+        tracking=True,
+    )
+    raw_material_value = fields.Monetary(
+        string='Raw Material Value',
         currency_field='currency_id',
         tracking=True,
-        help='Total value of goods being financed by this loan',
+        help='Monetary value of the raw materials financed under the loan facility.',
+    )
+
+    # -------------------------------------------------------------------------
+    # FIELDS — Export Proceeds & Settlement
+    # -------------------------------------------------------------------------
+    export_proceeds_foreign_amount = fields.Float(
+        string='Export Proceeds Received (Foreign Currency)',
+        digits=(16, 4),
+        compute='_compute_export_proceeds',
+        store=True,
+        help='Actual amount collected from the foreign buyer after the export '
+             'transaction, in foreign currency.',
+    )
+    export_proceeds_local_amount = fields.Monetary(
+        string='Export Proceeds Received (Local Equivalent)',
+        currency_field='currency_id',
+        compute='_compute_export_proceeds',
+        store=True,
+        help='Export proceeds received, converted into local currency equivalent.',
+    )
+    loan_settled_amount = fields.Monetary(
+        string='Loan Settled Amount',
+        currency_field='currency_id',
+        compute='_compute_loan_settled_amount',
+        help='Portion of the export proceeds used to repay or settle this '
+             'pre-shipment export loan facility.',
+    )
+    company_remaining_amount = fields.Monetary(
+        string='Company Remaining Amount',
+        currency_field='currency_id',
+        compute='_compute_company_remaining_amount',
+        help='Money remaining for the company after the bank has deducted the settled amount.',
+    )
+    outstanding_balance = fields.Monetary(
+        string='Outstanding Balance',
+        currency_field='currency_id',
+        compute='_compute_outstanding_balance',
+        help='Remaining unpaid amount of the loan exposure after repayments or '
+             'settlements have been applied. Includes unpaid principal, interest '
+             'and penalty charges.',
+    )
+
+    # -------------------------------------------------------------------------
+    # FIELDS — Purpose & Collateral
+    # -------------------------------------------------------------------------
+    purpose = fields.Text(
+        string='Purpose',
+        tracking=True,
+        help='Intended use of the pre-shipment loan (e.g. sesame procurement, soya meal processing).',
+    )
+    collateral_document_ids = fields.Many2many(
+        'ir.attachment',
+        'preshipment_loan_collateral_attachment_rel',
+        'loan_id',
+        'attachment_id',
+        string='Collateral Documents',
+        help='Attach export contracts, LC documents, guarantees, or other collateral documents.',
     )
 
     # -------------------------------------------------------------------------
@@ -161,18 +263,31 @@ class PreShipmentLoan(models.Model):
         required=True,
         tracking=True,
     )
-    penalty_rate = fields.Float(
-        string='Penalty Rate (% per year)',
+    penalty_rate_tier1 = fields.Float(
+        string='Penalty Rate — Days 1–30 (% p.a.)',
         digits=(16, 6),
         default=0.0,
         tracking=True,
-        help='Applied if foreign currency is not delivered on time',
+        help='Annual penalty rate applied for every day in the first 30 days past the expected export date.',
+    )
+    penalty_rate_tier2 = fields.Float(
+        string='Penalty Rate — Days 31–60 (% p.a.)',
+        digits=(16, 6),
+        default=0.0,
+        tracking=True,
+        help='Annual penalty rate applied for every day between 31 and 60 days past the expected export date.',
+    )
+    penalty_rate_tier3 = fields.Float(
+        string='Penalty Rate — Days 60+ (% p.a.)',
+        digits=(16, 6),
+        default=0.0,
+        tracking=True,
+        help='Annual penalty rate applied for every day beyond 60 days past the expected export date.',
     )
     penalty_amount = fields.Monetary(
         string='Penalty Amount',
         currency_field='currency_id',
         compute='_compute_penalty',
-        store=True,
     )
     total_interest = fields.Monetary(
         string='Total Interest',
@@ -265,7 +380,7 @@ class PreShipmentLoan(models.Model):
             rec.currency_remaining = max(rec.total_currency_to_store - stored, 0.0)
             if rec.total_currency_to_store:
                 rec.currency_fulfillment_percent = round(
-                    stored / rec.total_currency_to_store * 100, 2
+                    stored / rec.total_currency_to_store, 4
                 )
             else:
                 rec.currency_fulfillment_percent = 0.0
@@ -275,26 +390,82 @@ class PreShipmentLoan(models.Model):
         for rec in self:
             rec.total_interest = sum(l.interest for l in rec.loan_line_ids)
 
+    @api.depends('sale_order_ids')
+    def _compute_sale_order_count(self):
+        for rec in self:
+            rec.sale_order_count = len(rec.sale_order_ids)
+
+    @api.depends('loan_line_ids.entry_type', 'loan_line_ids.currency_deposited', 'loan_line_ids.amount_deposited_local')
+    def _compute_export_proceeds(self):
+        for rec in self:
+            foreign = sum(l.currency_deposited for l in rec.loan_line_ids if l.entry_type == 'currency')
+            local = sum(l.amount_deposited_local for l in rec.loan_line_ids if l.entry_type == 'currency')
+            rec.export_proceeds_foreign_amount = foreign
+            rec.export_proceeds_local_amount = local
+
+    @api.depends('export_proceeds_local_amount', 'loan_used', 'total_interest', 'penalty_amount')
+    def _compute_loan_settled_amount(self):
+        for rec in self:
+            total_due = rec.loan_used + rec.total_interest + rec.penalty_amount
+            if rec.export_proceeds_local_amount:
+                rec.loan_settled_amount = min(rec.export_proceeds_local_amount, total_due)
+            else:
+                rec.loan_settled_amount = 0.0
+
+    @api.depends('export_proceeds_local_amount', 'loan_settled_amount')
+    def _compute_company_remaining_amount(self):
+        for rec in self:
+            if rec.export_proceeds_local_amount:
+                rec.company_remaining_amount = max(rec.export_proceeds_local_amount - rec.loan_settled_amount, 0.0)
+            else:
+                rec.company_remaining_amount = 0.0
+
+    @api.depends('loan_used', 'total_interest', 'penalty_amount', 'loan_settled_amount')
+    def _compute_outstanding_balance(self):
+        for rec in self:
+            rec.outstanding_balance = max(
+                rec.loan_used + rec.total_interest + rec.penalty_amount
+                - rec.loan_settled_amount,
+                0.0,
+            )
+
     @api.depends(
-        'currency_remaining', 'penalty_rate', 'loan_amount', 'expected_export_date',
+        'currency_remaining', 'penalty_rate_tier1', 'penalty_rate_tier2', 'penalty_rate_tier3',
+        'loan_used', 'expected_export_date',
     )
     def _compute_penalty(self):
         from datetime import date
         for rec in self:
             if (
-                rec.penalty_rate
-                and rec.expected_export_date
+                rec.expected_export_date
                 and rec.expected_export_date < date.today()
                 and rec.currency_remaining > 0
             ):
                 days_overdue = (date.today() - rec.expected_export_date).days
-                daily_penalty_rate = rec.penalty_rate / 100.0 / 365.0
-                # Penalty based on outstanding loan for overdue period
-                rec.penalty_amount = round(
-                    rec.loan_amount * daily_penalty_rate * days_overdue, 2
-                )
+                principal = rec.loan_used
+
+                # Split overdue days into the three penalty tiers
+                tier1_days = min(days_overdue, 30)
+                tier2_days = min(max(days_overdue - 30, 0), 30)
+                tier3_days = max(days_overdue - 60, 0)
+
+                penalty = 0.0
+                if tier1_days > 0 and rec.penalty_rate_tier1:
+                    penalty += principal * (rec.penalty_rate_tier1 / 100.0 / 365.0) * tier1_days
+                if tier2_days > 0 and rec.penalty_rate_tier2:
+                    penalty += principal * (rec.penalty_rate_tier2 / 100.0 / 365.0) * tier2_days
+                if tier3_days > 0 and rec.penalty_rate_tier3:
+                    penalty += principal * (rec.penalty_rate_tier3 / 100.0 / 365.0) * tier3_days
+
+                rec.penalty_amount = round(penalty, 2)
             else:
                 rec.penalty_amount = 0.0
+
+    @api.constrains('annual_interest_rate')
+    def _check_interest_rate(self):
+        for record in self:
+            if record.annual_interest_rate < 0:
+                raise ValidationError(_('Interest rate cannot be negative.'))
 
     # -------------------------------------------------------------------------
     # SEQUENCE
@@ -302,6 +473,20 @@ class PreShipmentLoan(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if not vals.get('purpose'):
+                raise UserError(_("Loan Purpose is compulsory when creating a new loan."))
+            col = vals.get('collateral_document_ids')
+            has_doc = False
+            if col and isinstance(col, (list, tuple)):
+                for cmd in col:
+                    if isinstance(cmd, (list, tuple)):
+                        if cmd[0] == 6 and cmd[2]:
+                            has_doc = True
+                        elif cmd[0] in (4, 0, 1, 2):
+                            has_doc = True
+            if not has_doc:
+                raise UserError(_("At least one Collateral Document must be attached when creating a new loan."))
+
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].next_by_code('preshipment.loan') or 'New'
         return super().create(vals_list)
@@ -365,6 +550,9 @@ class PreShipmentLoan(models.Model):
                     'The selected bank journal has no default account. '
                     'Please configure it in Accounting > Journals.'
                 ))
+            partner = rec.bank_journal_id.bank_account_id.partner_id \
+                if rec.bank_journal_id.bank_account_id \
+                else self.env.company.partner_id
             move_vals = {
                 'journal_id': rec.bank_journal_id.id,
                 'date': rec.start_date or fields.Date.context_today(self),
@@ -381,6 +569,7 @@ class PreShipmentLoan(models.Model):
                     (0, 0, {
                         'name': _('Loan Payable: %s') % rec.name,
                         'account_id': rec.account_payable_id.id,
+                        'partner_id': partner.id,
                         'debit': 0.0,
                         'credit': rec.loan_amount,
                     }),
@@ -402,7 +591,7 @@ class PreShipmentLoan(models.Model):
             # Bills must use a purchase journal, not a bank journal
             purchase_journal = self.env['account.journal'].search([
                 ('type', '=', 'purchase'),
-                ('company_id', '=', self.env.company.id),
+                ('company_id', '=', rec.company_id.id),
             ], limit=1)
             if not purchase_journal:
                 raise UserError(_('No purchase journal found. Please create one in Accounting > Configuration > Journals.'))
@@ -470,4 +659,14 @@ class PreShipmentLoan(models.Model):
             'res_model': 'account.move',
             'view_mode': 'list,form',
             'domain': [('id', 'in', bills.ids)],
+        }
+
+    def action_view_sale_orders(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Sales Orders'),
+            'res_model': 'sale.order',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.sale_order_ids.ids)],
         }

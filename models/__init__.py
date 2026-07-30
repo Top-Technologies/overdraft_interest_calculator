@@ -7,3 +7,6 @@ from . import merchandise_loan_line
 from . import preshipment_loan
 from . import preshipment_loan_line
 from . import account_move
+from . import loan_alert_cron
+from . import loan_management_report
+from . import loan_report_wizard

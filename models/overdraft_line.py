@@ -42,6 +42,24 @@ class OverdraftLine(models.Model):
         currency_field='currency_id',
         help='Money paid back to reduce the overdraft',
     )
+    interest_payment = fields.Monetary(
+        string='Interest Payment',
+        default=0.0,
+        currency_field='currency_id',
+        help='Portion of the payment allocated to cumulative interest',
+    )
+    principal_payment = fields.Monetary(
+        string='Principal Payment',
+        default=0.0,
+        currency_field='currency_id',
+        help='Portion of the payment allocated to reducing the balance',
+    )
+    penalty_payment = fields.Monetary(
+        string='Penalty Payment',
+        default=0.0,
+        currency_field='currency_id',
+        help='Money paid specifically for the penalty',
+    )
     balance = fields.Monetary(
         string='Balance',
         currency_field='currency_id',
@@ -55,11 +73,12 @@ class OverdraftLine(models.Model):
         readonly=True,
         help='Interest charged for this day: |Balance| × Daily Rate',
     )
-    penalty = fields.Monetary(
-        string='Extra Interest (Penalty)',
+    penalty_accrued = fields.Monetary(
+        string='Penalty Accrued',
         default=0.0,
         currency_field='currency_id',
-        help='Additional penalty interest (editable — enter only when applicable)',
+        readonly=True,
+        help='Penalty accrued at the 90-day mark',
     )
     cumulative_interest = fields.Monetary(
         string='Cumulative Interest',
@@ -72,19 +91,69 @@ class OverdraftLine(models.Model):
     # -------------------------------------------------------------------------
     # CRUD OVERRIDES
     # -------------------------------------------------------------------------
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+        is_user_action = not self.env.su and not self.env.context.get('skip_access_check')
+        if is_user_action:
+            from markupsafe import Markup
+            for line in lines:
+                if line.debit > 0 or line.payment > 0 or line.penalty_payment > 0:
+                    user_name = self.env.user.name
+                    date_str = line.date.strftime('%Y-%m-%d') if line.date else ''
+                    symbol = line.currency_id.symbol or ''
+
+                    details = []
+                    if line.debit > 0:
+                        details.append(f"Debit: {line.debit:,.2f} {symbol}")
+                    if line.payment > 0:
+                        details.append(f"Payment: {line.payment:,.2f} {symbol}")
+                    if line.penalty_payment > 0:
+                        details.append(f"Penalty Payment: {line.penalty_payment:,.2f} {symbol}")
+
+                    details_str = " | ".join(details)
+                    message_body = Markup(
+                        f"<b>Overdraft Entry Recorded ({date_str}):</b> {details_str} by {user_name}"
+                    )
+                    line.overdraft_id.message_post(body=message_body, message_type='comment', subtype_xmlid='mail.mt_note')
+        return lines
+
     def write(self, vals):
-        """Prevent non-managers from editing restricted fields."""
-        # Allow system/sudo writes (e.g. from action_calculate_amortization)
-        if self.env.su or self.env.context.get('skip_access_check'):
-            return super().write(vals)
-        if not self.env.user.has_group(
-            'overdraft_interest_calculator.group_overdraft_manager'
-        ):
-            # Allow users to edit only these fields
-            allowed_fields = {'debit', 'payment', 'penalty', 'notes'}
-            if not set(vals.keys()).issubset(allowed_fields):
-                raise UserError(_(
-                    'Only managers can edit computed fields. '
-                    'You can modify Debit, Payment, Penalty, and Notes.'
-                ))
-        return super().write(vals)
+        """Prevent non-managers from editing restricted fields and log user edits."""
+        is_user_action = not self.env.su and not self.env.context.get('skip_access_check')
+        if is_user_action:
+            if not self.env.user.has_group(
+                'overdraft_interest_calculator.group_overdraft_editor'
+            ):
+                allowed_fields = {'debit', 'payment', 'penalty_payment', 'notes'}
+                if not set(vals.keys()).issubset(allowed_fields):
+                    raise UserError(_(
+                        'Only editors can edit computed fields. '
+                        'You can modify Debit, Payment, Penalty Payment, and Notes.'
+                    ))
+
+        res = super().write(vals)
+
+        if is_user_action:
+            from markupsafe import Markup
+            for line in self:
+                if 'debit' in vals or 'payment' in vals or 'penalty_payment' in vals:
+                    user_name = self.env.user.name
+                    date_str = line.date.strftime('%Y-%m-%d') if line.date else ''
+                    symbol = line.currency_id.symbol or ''
+
+                    details = []
+                    if 'debit' in vals:
+                        details.append(f"Debit: {vals['debit']:,.2f} {symbol}")
+                    if 'payment' in vals:
+                        details.append(f"Payment: {vals['payment']:,.2f} {symbol}")
+                    if 'penalty_payment' in vals:
+                        details.append(f"Penalty Payment: {vals['penalty_payment']:,.2f} {symbol}")
+
+                    details_str = " | ".join(details)
+                    message_body = Markup(
+                        f"<b>Overdraft Entry Updated ({date_str}):</b> {details_str} by {user_name}"
+                    )
+                    line.overdraft_id.message_post(body=message_body, message_type='comment', subtype_xmlid='mail.mt_note')
+
+        return res

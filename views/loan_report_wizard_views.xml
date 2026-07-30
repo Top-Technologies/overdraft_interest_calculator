@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================== -->
+    <!--   QWeb PDF Template for Report Wizard                              -->
+    <!-- ================================================================== -->
+    <record id="action_report_loan_report_wizard_pdf" model="ir.actions.report">
+        <field name="name">Loan Report PDF</field>
+        <field name="model">loan.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">overdraft_interest_calculator.report_loan_report_wizard_pdf</field>
+        <field name="report_file">Loan_Report</field>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_loan_report_wizard_pdf">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>
+                            <t t-if="doc.report_type == 'portfolio'">Loan Portfolio Report</t>
+                            <t t-if="doc.report_type == 'repayment'">Repayment Schedule Report</t>
+                            <t t-if="doc.report_type == 'utilization'">Loan Utilization Report</t>
+                            <t t-if="doc.report_type == 'maturity'">Loan Maturity Report</t>
+                            <t t-if="doc.report_type == 'exposure'">Loan Exposure Report</t>
+                        </h2>
+                        <p>
+                            <strong>Generated:</strong>
+                            <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/>
+                        </p>
+                        <hr/>
+                        <div style="margin-top: 15px;">
+                            <t t-out="doc.report_html"/>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- ================================================================== -->
+    <!--   FORM VIEW                                                        -->
+    <!-- ================================================================== -->
+    <record id="view_loan_report_wizard_form" model="ir.ui.view">
+        <field name="name">loan.report.wizard.form</field>
+        <field name="model">loan.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Loan Report">
+                <header>
+                    <button name="action_generate"
+                            string="Generate Report"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-cogs"/>
+                    <button name="action_export_pdf"
+                            string="Export PDF"
+                            type="object"
+                            class="btn-secondary"
+                            icon="fa-file-pdf-o"
+                            invisible="state != 'generated'"/>
+                    <button name="action_export_xlsx"
+                            string="Export Excel"
+                            type="object"
+                            class="btn-secondary"
+                            icon="fa-file-excel-o"
+                            invisible="state != 'generated'"/>
+                    <button name="action_export_csv"
+                            string="Export CSV"
+                            type="object"
+                            class="btn-secondary"
+                            icon="fa-file-text-o"
+                            invisible="state != 'generated'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,generated"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="report_type" readonly="state == 'generated'"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Filters">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="bank_id"
+                                   placeholder="All Banks"
+                                   options="{'no_create': True}"
+                                   help="Leave empty to include all banks in the report."/>
+                            <field name="state_filter"/>
+                        </group>
+                        <group string="Report Options">
+                            <field name="maturity_window"
+                                   invisible="report_type != 'maturity'"/>
+                            <field name="group_by"
+                                   invisible="report_type != 'exposure'"/>
+                        </group>
+                    </group>
+                    <notebook invisible="state != 'generated'">
+                        <page string="Report Output" name="report_output">
+                            <field name="report_html" widget="html" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!--   SERVER ACTIONS — one per report type (auto-generate on open)      -->
+    <!-- ================================================================== -->
+
+    <!-- Portfolio Report -->
+    <record id="action_server_report_portfolio" model="ir.actions.server">
+        <field name="name">Loan Portfolio</field>
+        <field name="model_id" ref="model_loan_report_wizard"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_report('portfolio')</field>
+    </record>
+
+    <!-- Repayment Schedule Report -->
+    <record id="action_server_report_repayment" model="ir.actions.server">
+        <field name="name">Repayment Schedule</field>
+        <field name="model_id" ref="model_loan_report_wizard"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_report('repayment')</field>
+    </record>
+
+    <!-- Utilization Report -->
+    <record id="action_server_report_utilization" model="ir.actions.server">
+        <field name="name">Loan Utilization</field>
+        <field name="model_id" ref="model_loan_report_wizard"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_report('utilization')</field>
+    </record>
+
+    <!-- Maturity Report -->
+    <record id="action_server_report_maturity" model="ir.actions.server">
+        <field name="name">Loan Maturity</field>
+        <field name="model_id" ref="model_loan_report_wizard"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_report('maturity')</field>
+    </record>
+
+    <!-- Exposure Report -->
+    <record id="action_server_report_exposure" model="ir.actions.server">
+        <field name="name">Loan Exposure</field>
+        <field name="model_id" ref="model_loan_report_wizard"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_report('exposure')</field>
+    </record>
+
+</odoo>

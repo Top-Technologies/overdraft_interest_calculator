@@ -1,42 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ============================================ -->
-    <!--   TERM LOAN LINE — LIST VIEW                 -->
-    <!-- ============================================ -->
-    <record id="view_term_loan_line_list" model="ir.ui.view">
-        <field name="name">term.loan.line.list</field>
-        <field name="model">term.loan.line</field>
-        <field name="arch" type="xml">
-            <list string="Amortization Schedule"
-                  create="false" edit="false" delete="false">
-                <field name="currency_id" column_invisible="1"/>
-                <field name="payment_number" string="Pmt. No."/>
-                <field name="payment_date" string="Payment Date"/>
-                <field name="beginning_balance" string="Beginning Balance"
-                       widget="monetary"
-                       options="{'currency_field': 'currency_id'}"/>
-                <field name="scheduled_payment" string="Scheduled Payment"
-                       widget="monetary"
-                       options="{'currency_field': 'currency_id'}"/>
-                <field name="extra_payment" string="Extra Payment"
-                       widget="monetary"
-                       options="{'currency_field': 'currency_id'}"/>
-                <field name="total_payment" string="Total Payment"
-                       widget="monetary"
-                       options="{'currency_field': 'currency_id'}"/>
-                <field name="interest" string="Interest"
-                       widget="monetary"
-                       options="{'currency_field': 'currency_id'}"/>
-                <field name="principal" string="Principal"
-                       widget="monetary"
-                       options="{'currency_field': 'currency_id'}"/>
-                <field name="ending_balance" string="Ending Balance"
-                       widget="monetary"
-                       options="{'currency_field': 'currency_id'}"/>
-                <field name="cumulative_interest" string="Cumulative Interest"
-                       widget="monetary"
-                       options="{'currency_field': 'currency_id'}"/>
-            </list>
-        </field>
-    </record>
+       <!-- ============================================ -->
+       <!--   TERM LOAN LINE — LIST VIEW                 -->
+       <!-- ============================================ -->
+       <record id="view_term_loan_line_list" model="ir.ui.view">
+              <field name="name">term.loan.line.list</field>
+              <field name="model">term.loan.line</field>
+              <field name="arch" type="xml">
+                     <list string="Amortization Schedule" create="false" edit="false" delete="false" decoration-danger="is_overdue" decoration-muted="is_paid">
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="is_overdue" column_invisible="1"/>
+                            <field name="payment_number" string="Pmt. No."/>
+                            <field name="payment_date" string="Payment Date"/>
+                            <field name="beginning_balance" string="Beginning Balance" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="scheduled_payment" string="Scheduled Payment" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="extra_payment" string="Extra Payment" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="total_payment" string="Total Payment" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="interest" string="Interest" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="principal" string="Principal" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="ending_balance" string="Ending Balance" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="cumulative_interest" string="Cumulative Interest" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="days_overdue" string="Days Overdue"/>
+                            <field name="is_paid" string="Paid"/>
+                            <field name="paid_date" string="Paid Date"/>
+                     </list>
+              </field>
+       </record>
 </odoo>
