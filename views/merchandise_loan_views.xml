@@ -21,6 +21,16 @@
                 <field name="outstanding_loan" string="Outstanding" widget="monetary"
                        options="{'currency_field': 'currency_id'}"/>
                 <field name="goods_held_qty" string="Held (Qty)"/>
+                <field name="product_category" optional="show"/>
+                <field name="goods_location" optional="hide"/>
+                <field name="is_dead_stock_risk" optional="hide" widget="boolean_toggle"/>
+                <field name="sales_status" widget="badge" optional="show"
+                       decoration-info="sales_status == 'unsold'"
+                       decoration-warning="sales_status == 'reserved'"
+                       decoration-primary="sales_status == 'partially_sold'"
+                       decoration-success="sales_status == 'sold'"
+                       decoration-muted="sales_status == 'slow_moving'"
+                       decoration-danger="sales_status == 'dead_stock'"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
                        decoration-warning="state == 'submitted'"
@@ -49,12 +59,12 @@
                             type="object"
                             class="oe_highlight"
                             invisible="state != 'submitted'"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                            groups="overdraft_interest_calculator.group_overdraft_editor"/>
                     <button name="action_reject"
                             string="Reject"
                             type="object"
                             invisible="state != 'submitted'"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                            groups="overdraft_interest_calculator.group_overdraft_editor"/>
                     <button name="action_activate"
                             string="Activate"
                             type="object"
@@ -64,12 +74,12 @@
                             string="Close"
                             type="object"
                             invisible="state != 'active'"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                            groups="overdraft_interest_calculator.group_overdraft_editor"/>
                     <button name="action_reset_to_draft"
                             string="Reset to Draft"
                             type="object"
                             invisible="state not in ('submitted',)"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                            groups="overdraft_interest_calculator.group_overdraft_editor"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,submitted,approved,active,closed"/>
                     <button name="action_create_bill"
@@ -99,6 +109,10 @@
                     <div class="oe_title">
                         <h1><field name="name" placeholder="Reference"/></h1>
                     </div>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company"
+                               readonly="state in ('approved', 'active', 'closed')"/>
+                    </group>
 
                     <!-- Loan Setup -->
                     <group>
@@ -113,6 +127,8 @@
                             <field name="goods_unit_price" widget="monetary"
                                    options="{'currency_field': 'currency_id'}"
                                    readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="goods_selling_price" widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"/>
                             <field name="total_goods_value" widget="monetary"
                                    options="{'currency_field': 'currency_id'}" readonly="1"/>
                             <field name="warehouse_id"
@@ -120,6 +136,8 @@
                             <field name="currency_id"
                                    readonly="state in ('approved', 'active', 'closed')"
                                    groups="base.group_multi_currency"/>
+                            <field name="analytic_distribution" widget="analytic_distribution"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
                         </group>
                         <group string="Coverage &amp; Interest">
                             <field name="company_coverage_percent"
@@ -137,6 +155,42 @@
                                    readonly="state in ('approved', 'active', 'closed')"/>
                             <field name="activation_date" readonly="1"
                                    invisible="not activation_date"/>
+                        </group>
+                    </group>
+
+                    <!-- Penalty Rates -->
+                    <group>
+                        <group string="Penalty Rates">
+                            <field name="penalty_rate_tier1" string="Days 1–30 (% p.a.)"/>
+                            <field name="penalty_rate_tier2" string="Days 31–60 (% p.a.)"/>
+                            <field name="penalty_rate_tier3" string="Days 60+ (% p.a.)"/>
+                        </group>
+                    </group>
+
+                    <!-- Trade & Merchandise Details -->
+                    <group>
+                        <group string="Trade &amp; Merchandise Details">
+                            <field name="product_category"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="goods_location"
+                                   readonly="state == 'closed'"/>
+                            <field name="sales_status"
+                                   readonly="state == 'closed'"/>
+                        </group>
+                        <group string="Import Documentation">
+                            <field name="import_document_type"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                            <field name="import_document_number"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Goods Description" colspan="2">
+                            <field name="goods_description"
+                                   placeholder="Detailed description of the financed merchandise: specifications, model, type, or quality…"
+                                   nolabel="1"
+                                   colspan="2"
+                                   readonly="state in ('approved', 'active', 'closed')"/>
                         </group>
                     </group>
 
@@ -167,12 +221,16 @@
                                            options="{'currency_field': 'currency_id'}" readonly="1"/>
                                     <field name="total_interest" widget="monetary"
                                            options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                    <field name="penalty_amount" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
                                 </group>
                                 <group string="Goods Status">
                                     <field name="goods_held_qty" readonly="1"
                                            string="Goods Held by Bank (Qty)"/>
                                     <field name="total_goods_released_qty" readonly="1"
                                            string="Goods Released (Qty)"/>
+                                    <field name="goods_owned_by_company" readonly="1"
+                                           string="Goods Owned by Company (Qty)"/>
                                 </group>
                             </group>
                             <group>
@@ -181,24 +239,36 @@
                                            options="{'currency_field': 'currency_id'}" readonly="1"/>
                                     <field name="actual_unit_cost" widget="monetary"
                                            options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                    <field name="margin_per_unit" widget="monetary"
+                                           options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                </group>
+                                <group string="Sales &amp; Ageing">
+                                    <field name="days_held" readonly="1"/>
+                                    <field name="is_dead_stock_risk" readonly="1" widget="boolean_toggle"/>
                                 </group>
                             </group>
                         </page>
 
                         <!-- Goods Release Entries Tab -->
                         <page string="Goods Release Entries">
-                            <field name="loan_line_ids" editable="bottom"
+                            <field name="loan_line_ids"
                                    readonly="state not in ('active',)">
-                                <list string="Goods Release Entries" create="true" delete="true">
+                                <list string="Goods Release Entries" create="true" delete="true" editable="bottom">
                                     <field name="currency_id" column_invisible="1"/>
                                     <field name="date" string="Date"/>
                                     <field name="goods_released_quantity"
                                            string="Goods Qty to Release"/>
+                                    <field name="goods_value" string="Goods Value"
+                                           widget="monetary" readonly="1"
+                                           options="{'currency_field': 'currency_id'}"/>
                                     <field name="payment_amount" string="Payment Amount"
-                                           widget="monetary"
+                                           widget="monetary" readonly="1"
                                            options="{'currency_field': 'currency_id'}"/>
                                     <field name="interest" string="Interest Portion"
-                                           widget="monetary"
+                                           widget="monetary" readonly="1"
+                                           options="{'currency_field': 'currency_id'}"/>
+                                    <field name="penalty" string="Penalty Portion"
+                                           widget="monetary" readonly="1"
                                            options="{'currency_field': 'currency_id'}"/>
                                     <field name="outstanding_after" string="Outstanding After"
                                            widget="monetary"
@@ -215,13 +285,15 @@
                                     <field name="purpose"
                                            placeholder="Describe the intended use (e.g. import of plastic raw materials for packaging)…"
                                            nolabel="1"
-                                           colspan="2"/>
+                                           colspan="2"
+                                           required="1"/>
                                 </group>
                             </group>
                             <separator string="Collateral Documents"/>
                             <field name="collateral_document_ids"
                                    widget="many2many_binary"
-                                   string="Attach Collateral Documents"/>
+                                   string="Attach Collateral Documents"
+                                   required="1"/>
                         </page>
                     </notebook>
 
@@ -256,6 +328,7 @@
         <field name="arch" type="xml">
             <pivot string="Merchandise Loans">
                 <field name="bank_id" type="row"/>
+                <field name="product_category" type="row"/>
                 <field name="state" type="col"/>
                 <field name="bank_amount" type="measure"/>
                 <field name="outstanding_loan" type="measure"/>

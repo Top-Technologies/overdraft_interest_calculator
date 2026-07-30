@@ -16,13 +16,15 @@
     """,
     'author': 'Eyosias Yitay',
     'license': 'LGPL-3',
-    'depends': ['base', 'mail', 'account', 'stock', 'web'],
+    'depends': ['base', 'mail', 'account', 'stock', 'web', 'analytic', 'sale'],
     'data': [
         # Security
         'security/overdraft_groups.xml',
         'security/ir.model.access.csv',
+        'security/ir_rule_data.xml',
         # Data
         'data/ir_sequence_data.xml',
+        'data/ir_cron_data.xml',
         # Views — Overdraft
         'views/overdraft_line_views.xml',
         'views/overdraft_interest_views.xml',
@@ -35,8 +37,12 @@
         'views/preshipment_loan_views.xml',
         # Dashboard
         'views/dashboard_views.xml',
+        # Reports
+        'views/loan_management_report_views.xml',
         # Wizards
         'wizard/payment_wizard_views.xml',
+        # Reporting Wizard
+        'views/loan_report_wizard_views.xml',
         # Menus (always last)
         'views/menu_items.xml',
     ],

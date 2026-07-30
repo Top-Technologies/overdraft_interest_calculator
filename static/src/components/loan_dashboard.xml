@@ -6,20 +6,16 @@
             <!-- ── Top Bar: Tabs + Filters ── -->
             <div class="ld-topbar">
                 <div class="ld-tabs">
-                    <button class="ld-tab" t-att-class="state.activeTab === 'overdraft' ? 'active' : ''"
-                            t-on-click="() => this.setTab('overdraft')">
+                    <button class="ld-tab" t-att-class="state.activeTab === 'overdraft' ? 'active' : ''" t-on-click="() => this.setTab('overdraft')">
                         💳 Overdraft
                     </button>
-                    <button class="ld-tab" t-att-class="state.activeTab === 'term_loan' ? 'active' : ''"
-                            t-on-click="() => this.setTab('term_loan')">
+                    <button class="ld-tab" t-att-class="state.activeTab === 'term_loan' ? 'active' : ''" t-on-click="() => this.setTab('term_loan')">
                         🏦 Term Loan
                     </button>
-                    <button class="ld-tab" t-att-class="state.activeTab === 'merchandise' ? 'active' : ''"
-                            t-on-click="() => this.setTab('merchandise')">
+                    <button class="ld-tab" t-att-class="state.activeTab === 'merchandise' ? 'active' : ''" t-on-click="() => this.setTab('merchandise')">
                         📦 Merchandise Loan
                     </button>
-                    <button class="ld-tab" t-att-class="state.activeTab === 'preshipment' ? 'active' : ''"
-                            t-on-click="() => this.setTab('preshipment')">
+                    <button class="ld-tab" t-att-class="state.activeTab === 'preshipment' ? 'active' : ''" t-on-click="() => this.setTab('preshipment')">
                         🚢 Pre-Shipment Loan
                     </button>
                 </div>
@@ -28,7 +24,9 @@
                     <select t-on-change="onBankChange">
                         <option value="">All Banks</option>
                         <t t-foreach="state.banks" t-as="bank" t-key="bank.id">
-                            <option t-att-value="bank.id"><t t-esc="bank.name"/></option>
+                            <option t-att-value="bank.id">
+                                <t t-esc="bank.name"/>
+                            </option>
                         </t>
                     </select>
                     <input type="date" t-on-change="onDateFromChange" placeholder="From"/>
@@ -58,7 +56,8 @@
                             <t t-esc="this._fmt(state.data.overdraft.totalUsed)"/>
                         </div>
                         <div class="ld-kpi-sub">
-                            <t t-esc="state.data.overdraft.usedPercent"/>% of limit drawn
+                            <t t-esc="state.data.overdraft.usedPercent"/>
+% of limit drawn
                         </div>
                     </div>
                     <div class="ld-kpi-card green">
@@ -103,7 +102,8 @@
                         <div class="ld-gauge-center">
                             <canvas id="overdraftGaugeChart" height="200"/>
                             <div class="ld-gauge-label">
-                                <t t-esc="state.data.overdraft.usedPercent"/>%
+                                <t t-esc="state.data.overdraft.usedPercent"/>
+%
                             </div>
                             <div class="ld-gauge-sub">of limit used</div>
                         </div>
@@ -111,21 +111,18 @@
                     <div class="ld-chart-card">
                         <div class="ld-chart-title">📈 Daily OD Balance &amp; Interest Trend</div>
                         <t t-if="state.data.overdraft.trendLabels and state.data.overdraft.trendLabels.length">
-                            
+
                             <!-- OD Filters -->
                             <div class="ld-od-filters" style="margin-bottom: 12px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: #f8fafc; padding: 10px; border-radius: 8px;">
                                 <span style="font-weight: 600; color: #475569;">Show Loans:</span>
                                 <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                                    <input type="checkbox" 
-                                           t-on-change="(e) => this.toggleAllOdLoans(e.target.checked)" 
-                                           t-att-checked="state.selectedOdLoans.length === Object.keys(state.data.overdraft.trendDataByOd).length"/> 
+                                    <input type="checkbox" t-on-change="(e) => this.toggleAllOdLoans(e.target.checked)" t-att-checked="state.selectedOdLoans.length === Object.keys(state.data.overdraft.trendDataByOd).length"/>
+ 
                                     All
                                 </label>
                                 <t t-foreach="Object.keys(state.data.overdraft.trendDataByOd)" t-as="odId" t-key="odId">
                                     <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                                        <input type="checkbox" 
-                                               t-on-change="(e) => this.toggleOdLoan(odId, e.target.checked)" 
-                                               t-att-checked="this.isOdSelected(odId)"/> 
+                                        <input type="checkbox" t-on-change="(e) => this.toggleOdLoan(odId, e.target.checked)" t-att-checked="this.isOdSelected(odId)"/>
                                         <t t-esc="state.data.overdraft.trendDataByOd[odId].name"/>
                                     </label>
                                 </t>
@@ -140,17 +137,142 @@
                         </t>
                     </div>
                 </div>
+
+                <!-- ── New Charts Row ── -->
+                <div class="ld-chart-grid">
+                    <div class="ld-chart-card">
+                        <div class="ld-chart-title">🏦 Interest &amp; Penalty by Bank</div>
+                        <t t-if="state.data.overdraft.bankBreakdownLabels and state.data.overdraft.bankBreakdownLabels.length">
+                            <div style="font-size:12px;color:#64748b;margin-bottom:10px;">
+                                Compares cumulative interest accrued vs penalty charges per bank facility — helps identify the most expensive facilities.
+                            </div>
+                            <canvas id="odBankBreakdownChart" height="220"/>
+                        </t>
+                        <t t-else="">
+                            <div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px;">
+                                No approved overdraft records found to display bank breakdown.
+                            </div>
+                        </t>
+                    </div>
+                    <div class="ld-chart-card">
+                        <div class="ld-chart-title">📅 Monthly Balance vs Payments</div>
+                        <t t-if="state.data.overdraft.monthlyCostLabels and state.data.overdraft.monthlyCostLabels.length">
+                            <div style="font-size:12px;color:#64748b;margin-bottom:10px;">
+                                Month-end overdraft balance drawn (bars, left axis) vs total payments made that month (line, right axis) — see how much you owed at month-end and how much you paid down.
+                            </div>
+                            <canvas id="odMonthlyCostChart" height="220"/>
+                        </t>
+                        <t t-else="">
+                            <div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px;">
+                                No amortization lines found. Calculate amortization on an approved overdraft first.
+                            </div>
+                        </t>
+                    </div>
+                </div>
             </t>
 
             <!-- ── Term Loan Tab ── -->
             <t t-if="!state.loading and state.activeTab === 'term_loan' and state.data.term_loan">
+                <!-- Alerts Panel -->
+                <t t-if="state.data.term_loan.alerts and state.data.term_loan.alerts.length">
+                    <div class="ld-chart-card ld-alerts-panel">
+                        <div class="ld-chart-title">
+                            🔔 Loan Alerts (<t t-esc="state.data.term_loan.alerts.length"/>
+)
+                        </div>
+                        <t t-foreach="state.data.term_loan.alerts" t-as="al" t-key="al.name">
+                            <div t-attf-class="ld-alert-row ld-alert-{{al.level}}">
+                                <span class="ld-alert-name">
+                                    <t t-esc="al.name"/>
+                                </span>
+                                <span class="ld-alert-label">
+                                    <t t-esc="this._alertLabel(al.level)"/>
+                                </span>
+                                <span class="ld-alert-msg">
+                                    <t t-esc="al.message"/>
+                                </span>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+
                 <div class="ld-kpi-grid">
                     <div class="ld-kpi-card blue">
-                        <div class="ld-kpi-label">Total Outstanding Principal</div>
+                        <div class="ld-kpi-label">Total Term Loan Approved</div>
                         <div class="ld-kpi-value">
-                            <t t-esc="this._fmt(state.data.term_loan.totalOutstanding)"/>
+                            <t t-esc="this._fmt(state.data.term_loan.totalApproved)"/>
                         </div>
-                        <div class="ld-kpi-sub">Total unpaid loan principal</div>
+                        <div class="ld-kpi-sub">All formally approved loans</div>
+                    </div>
+                    <div class="ld-kpi-card blue">
+                        <div class="ld-kpi-label">Disbursed Amount</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="this._fmt(state.data.term_loan.totalDisbursed)"/>
+                        </div>
+                        <div class="ld-kpi-sub">Released to borrowers so far</div>
+                    </div>
+                    <div class="ld-kpi-card teal">
+                        <div class="ld-kpi-label">Un-disbursed Balance</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="this._fmt(state.data.term_loan.totalUndisbursed)"/>
+                        </div>
+                        <div class="ld-kpi-sub">Approved but not yet released</div>
+                    </div>
+                    <div class="ld-kpi-card blue">
+                        <div class="ld-kpi-label">Current Outstanding Principal</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="this._fmt(state.data.term_loan.currentOutstanding)"/>
+                        </div>
+                        <div class="ld-kpi-sub">Unpaid principal right now</div>
+                    </div>
+                    <div class="ld-kpi-card purple">
+                        <div class="ld-kpi-label">Accrued Interest</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="this._fmt(state.data.term_loan.totalAccruedInterest)"/>
+                        </div>
+                        <div class="ld-kpi-sub">Accumulated, not yet paid</div>
+                    </div>
+                    <div class="ld-kpi-card amber">
+                        <div class="ld-kpi-label">Due in 30 Days</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="this._fmt(state.data.term_loan.totalDue30)"/>
+                        </div>
+                        <div class="ld-kpi-sub">Repayments due within 30 days</div>
+                    </div>
+                    <div class="ld-kpi-card amber">
+                        <div class="ld-kpi-label">Due in 90 Days</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="this._fmt(state.data.term_loan.totalDue90)"/>
+                        </div>
+                        <div class="ld-kpi-sub">Repayments due within 90 days</div>
+                    </div>
+                    <div class="ld-kpi-card red">
+                        <div class="ld-kpi-label">Overdue Principal</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="this._fmt(state.data.term_loan.totalOverduePrincipal)"/>
+                        </div>
+                        <div class="ld-kpi-sub">Unpaid principal past due</div>
+                    </div>
+                    <div class="ld-kpi-card red">
+                        <div class="ld-kpi-label">Overdue Interest</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="this._fmt(state.data.term_loan.totalOverdueInterest)"/>
+                        </div>
+                        <div class="ld-kpi-sub">Unpaid interest past due</div>
+                    </div>
+                    <div class="ld-kpi-card red">
+                        <div class="ld-kpi-label">Total Overdue</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="this._fmt(state.data.term_loan.totalOverdue)"/>
+                        </div>
+                        <div class="ld-kpi-sub">Principal + interest past due</div>
+                    </div>
+                    <div class="ld-kpi-card red">
+                        <div class="ld-kpi-label">Max Days Past Due</div>
+                        <div class="ld-kpi-value">
+                            <t t-esc="state.data.term_loan.maxDpd"/>
+                        </div>
+                        <div class="ld-kpi-sub">Worst delinquency across loans</div>
                     </div>
                     <div class="ld-kpi-card green">
                         <div class="ld-kpi-label">Total Extra Payments</div>
@@ -224,7 +346,87 @@
                         </div>
                         <div class="ld-kpi-sub">Accrued interest cost</div>
                     </div>
+
+                    <t t-if="state.data.merchandise.deadStock">
+                        <div class="ld-kpi-card red">
+                            <div class="ld-kpi-label">Dead Stock Loans</div>
+                            <div class="ld-kpi-value">
+                                <t t-esc="state.data.merchandise.deadStock.count"/>
+                            </div>
+                            <div class="ld-kpi-sub">Unsold/slow-moving beyond holding period</div>
+                        </div>
+                        <div class="ld-kpi-card orange">
+                            <div class="ld-kpi-label">Outstanding Tied to Dead Stock</div>
+                            <div class="ld-kpi-value">
+                                <t t-esc="this._fmt(state.data.merchandise.deadStock.totalOutstanding)"/>
+                            </div>
+                            <div class="ld-kpi-sub">Bank balance still owed on flagged goods</div>
+                        </div>
+                        <div class="ld-kpi-card amber">
+                            <div class="ld-kpi-label">Goods Value at Risk</div>
+                            <div class="ld-kpi-value">
+                                <t t-esc="this._fmt(state.data.merchandise.deadStock.totalGoodsValue)"/>
+                            </div>
+                            <div class="ld-kpi-sub">Total financed value of flagged goods</div>
+                        </div>
+                    </t>
                 </div>
+                <!-- Dead Stock Monitor Alerts -->
+                <t t-if="state.data.merchandise.deadStock">
+
+                    <t t-if="state.data.merchandise.deadStock.items.length">
+                        <div class="ld-chart-card ld-alerts-panel">
+                            <div class="ld-chart-title">
+                                ☠️ Dead Stock Watchlist (<t t-esc="state.data.merchandise.deadStock.items.length"/>
+)
+                            </div>
+                            <t t-foreach="state.data.merchandise.deadStock.items" t-as="ds" t-key="ds.name">
+                                <div class="ld-alert-row ld-alert-red">
+                                    <span class="ld-alert-name">
+                                        <t t-esc="ds.name"/>
+                                    </span>
+                                    <span class="ld-alert-label">
+                                        <t t-esc="ds.category"/>
+ ·                                        <t t-esc="ds.bank"/>
+                                    </span>
+                                    <span class="ld-alert-msg">
+                                        Held <t t-esc="ds.daysHeld"/>
+ days · Outstanding
+                                    <t t-esc="this._fmt(ds.outstanding)"/>
+                                </span>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+
+                <!-- Maturity Watchlist -->
+                <t t-if="state.data.merchandise.maturityLoans and state.data.merchandise.maturityLoans.length">
+                    <div class="ld-chart-card ld-alerts-panel">
+                        <div class="ld-chart-title">
+                            ⏰ Maturity Watchlist (<t t-esc="state.data.merchandise.maturityLoans.length"/>)
+                        </div>
+                        <t t-foreach="state.data.merchandise.maturityLoans" t-as="ml" t-key="ml.name">
+                            <div t-attf-class="ld-alert-row ld-alert-{{ml.bucket === 'overdue' ? 'red' : (ml.bucket === 'due30' ? 'yellow' : 'green')}}">
+                                <span class="ld-alert-name">
+                                    <t t-esc="ml.name"/>
+                                </span>
+                                <span class="ld-alert-label">
+                                    <t t-esc="ml.bank"/> · <t t-esc="ml.endDate"/>
+                                </span>
+                                <span class="ld-alert-msg">
+                                    <t t-if="ml.daysToMaturity &lt; 0">
+                                        <t t-esc="-ml.daysToMaturity"/> days overdue · 
+                                    </t>
+                                    <t t-else="">
+                                        Due in <t t-esc="ml.daysToMaturity"/> days · 
+                                    </t>
+                                    Outstanding <t t-esc="this._fmt(ml.outstanding)"/>
+                                </span>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
                 <div class="ld-chart-grid">
                     <div class="ld-chart-card">
                         <div class="ld-chart-title">Bank vs Company Coverage</div>
@@ -238,7 +440,8 @@
                                 <t t-esc="this._fmt(state.data.merchandise.bankTotal)"/>
                             </div>
                             <div class="ld-kpi-sub">
-                                <t t-esc="state.data.merchandise.bankPercent"/>% of total
+                                <t t-esc="state.data.merchandise.bankPercent"/>
+% of total
                             </div>
                         </div>
                         <div class="ld-kpi-card amber">
@@ -247,99 +450,215 @@
                                 <t t-esc="this._fmt(state.data.merchandise.companyTotal)"/>
                             </div>
                             <div class="ld-kpi-sub">
-                                <t t-esc="state.data.merchandise.companyPercent"/>% of total
+                                <t t-esc="state.data.merchandise.companyPercent"/>
+% of total
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Merchandise Loan Exposure by Product Category -->
+                <t t-if="state.data.merchandise.exposureByCategory and state.data.merchandise.exposureByCategory.length">
+                    <div class="ld-chart-grid">
+                        <div class="ld-chart-card">
+                            <div class="ld-chart-title">📦 Loan Exposure by Product Category</div>
+                            <canvas id="merchandiseExposureChart" height="220"/>
+                        </div>
+                        <div class="ld-chart-card">
+                            <div class="ld-chart-title">Concentration Breakdown</div>
+                            <t t-foreach="state.data.merchandise.exposureByCategory" t-as="cat" t-key="cat.key">
+                                <div class="ld-kpi-card blue" style="margin-bottom:10px">
+                                    <div class="ld-kpi-label">
+                                        <t t-esc="cat.label"/>
+                                    </div>
+                                    <div class="ld-kpi-value">
+                                        <t t-esc="this._fmt(cat.bankAmount)"/>
+                                    </div>
+                                    <div class="ld-kpi-sub">
+                                        <t t-esc="cat.percent"/>
+% of total exposure ·
+                                        <t t-esc="cat.count"/>
+ loan(s)
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+
+                <!-- Loan Maturity Schedule by Product -->
+                <div class="ld-chart-card">
+                    <div class="ld-chart-title">📅 Loan Maturity Schedule by Product</div>
+                    <t t-if="state.data.merchandise.maturityByCategory and state.data.merchandise.maturityByCategory.length">
+                        <canvas id="merchandiseMaturityChart" height="220"/>
+                    </t>
+                    <t t-else="">
+                        <p style="opacity:0.6">No active loans with an end date in the selected filters.</p>
+                    </t>
+                </div>
+
+
+        </t>
+
+        <!-- ── Pre-Shipment Tab ── -->
+        <t t-if="!state.loading and state.activeTab === 'preshipment' and state.data.preshipment">
+            <div class="ld-kpi-grid">
+                <div class="ld-kpi-card blue">
+                    <div class="ld-kpi-label">Total Loan Given</div>
+                    <div class="ld-kpi-value">
+                        <t t-esc="this._fmt(state.data.preshipment.loanAmount)"/>
+                    </div>
+                    <div class="ld-kpi-sub">Disbursed by banks</div>
+                </div>
+                <div class="ld-kpi-card red">
+                    <div class="ld-kpi-label">Loan Used</div>
+                    <div class="ld-kpi-value">
+                        <t t-esc="this._fmt(state.data.preshipment.loanUsed)"/>
+                    </div>
+                    <div class="ld-kpi-sub">
+                        <t t-esc="state.data.preshipment.usedPercent"/>
+% of total drawn
+                    </div>
+                </div>
+                <div class="ld-kpi-card green">
+                    <div class="ld-kpi-label">Loan Remaining</div>
+                    <div class="ld-kpi-value">
+                        <t t-esc="this._fmt(state.data.preshipment.loanRemaining)"/>
+                    </div>
+                    <div class="ld-kpi-sub">Still available to draw</div>
+                </div>
+                <div class="ld-kpi-card amber">
+                    <div class="ld-kpi-label">Total Interest</div>
+                    <div class="ld-kpi-value">
+                        <t t-esc="this._fmt(state.data.preshipment.totalInterest)"/>
+                    </div>
+                    <div class="ld-kpi-sub">Accrued interest</div>
+                </div>
+                <div class="ld-kpi-card red">
+                    <div class="ld-kpi-label">Penalty Amount</div>
+                    <div class="ld-kpi-value">
+                        <t t-esc="this._fmt(state.data.preshipment.totalPenalty)"/>
+                    </div>
+                    <div class="ld-kpi-sub">For late currency delivery</div>
+                </div>
+                <div class="ld-kpi-card blue">
+                    <div class="ld-kpi-label">Raw Material Value</div>
+                    <div class="ld-kpi-value">
+                        <t t-esc="this._fmt(state.data.preshipment.goodsValue)"/>
+                    </div>
+                    <div class="ld-kpi-sub">Total raw materials being financed</div>
+                </div>
+                <div class="ld-kpi-card teal">
+                    <div class="ld-kpi-label">Expected Currency to Deliver</div>
+                    <div class="ld-kpi-value">
+                        <t t-esc="this._fmtFx(state.data.preshipment.expectedProceeds, state.data.preshipment.foreignCurrencyName)"/>
+                    </div>
+                    <div class="ld-kpi-sub">Total foreign currency committed to bank</div>
+                </div>
+                <div class="ld-kpi-card green">
+                    <div class="ld-kpi-label">Currency Already Delivered</div>
+                    <div class="ld-kpi-value">
+                        <t t-esc="this._fmtFx(state.data.preshipment.actualProceeds, state.data.preshipment.foreignCurrencyName)"/>
+                    </div>
+                    <div class="ld-kpi-sub">
+                        <t t-esc="state.data.preshipment.collectionPercent"/>
+% of total delivered
+                    </div>
+                </div>
+                <div class="ld-kpi-card amber">
+                    <div class="ld-kpi-label">Currency Still Outstanding</div>
+                    <div class="ld-kpi-value">
+                        <t t-esc="this._fmtFx(state.data.preshipment.proceedsVariance, state.data.preshipment.foreignCurrencyName)"/>
+                    </div>
+                    <div class="ld-kpi-sub">Remaining foreign currency to deliver</div>
+                </div>
+            </div>
+
+            <!-- Maturity Watchlist -->
+            <t t-if="state.data.preshipment.maturityLoans and state.data.preshipment.maturityLoans.length">
+                <div class="ld-chart-card ld-alerts-panel">
+                    <div class="ld-chart-title">
+                        ⏰ Maturity Watchlist (<t t-esc="state.data.preshipment.maturityLoans.length"/>)
+                    </div>
+                    <t t-foreach="state.data.preshipment.maturityLoans" t-as="ml" t-key="ml.name">
+                        <div t-attf-class="ld-alert-row ld-alert-{{ml.bucket === 'overdue' ? 'red' : (ml.bucket === 'due30' ? 'yellow' : 'green')}}">
+                            <span class="ld-alert-name">
+                                <t t-esc="ml.name"/>
+                            </span>
+                            <span class="ld-alert-label">
+                                <t t-esc="ml.bank"/> · <t t-esc="ml.endDate"/>
+                            </span>
+                            <span class="ld-alert-msg">
+                                <t t-if="ml.daysToMaturity &lt; 0">
+                                    <t t-esc="-ml.daysToMaturity"/> days overdue ·
+                                </t>
+                                <t t-else="">
+                                    Due in <t t-esc="ml.daysToMaturity"/> days ·
+                                </t>
+                                Outstanding <t t-esc="this._fmt(ml.outstanding)"/>
+                            </span>
+                        </div>
+                    </t>
                 </div>
             </t>
 
-            <!-- ── Pre-Shipment Tab ── -->
-            <t t-if="!state.loading and state.activeTab === 'preshipment' and state.data.preshipment">
-                <div class="ld-kpi-grid">
-                    <div class="ld-kpi-card blue">
-                        <div class="ld-kpi-label">Total Loan Given</div>
-                        <div class="ld-kpi-value">
-                            <t t-esc="this._fmt(state.data.preshipment.loanAmount)"/>
-                        </div>
-                        <div class="ld-kpi-sub">Disbursed by banks</div>
+            <!-- Loan Maturity Schedule -->
+            <div class="ld-chart-card" style="margin-bottom: 16px;">
+                <div class="ld-chart-title">📅 Loans Maturing (30 / 60 / 90 Days)</div>
+                <t t-if="state.data.preshipment.maturityLoans and state.data.preshipment.maturityLoans.length">
+                    <canvas id="preshipmentMaturityChart" height="160"/>
+                </t>
+                <t t-else="">
+                    <div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">
+                        No active loans with an end date in the selected filters.
                     </div>
-                    <div class="ld-kpi-card red">
-                        <div class="ld-kpi-label">Loan Used</div>
-                        <div class="ld-kpi-value">
-                            <t t-esc="this._fmt(state.data.preshipment.loanUsed)"/>
-                        </div>
-                        <div class="ld-kpi-sub">
-                            <t t-esc="state.data.preshipment.usedPercent"/>% of total drawn
-                        </div>
-                    </div>
-                    <div class="ld-kpi-card green">
-                        <div class="ld-kpi-label">Loan Remaining</div>
-                        <div class="ld-kpi-value">
-                            <t t-esc="this._fmt(state.data.preshipment.loanRemaining)"/>
-                        </div>
-                        <div class="ld-kpi-sub">Still available to draw</div>
-                    </div>
-                    <div class="ld-kpi-card teal">
-                        <div class="ld-kpi-label">Currency to Deliver to Bank</div>
-                        <div class="ld-kpi-value">
-                            <t t-esc="state.data.preshipment.totalCurrency.toFixed(2)"/>
-                        </div>
-                        <div class="ld-kpi-sub">Total foreign currency committed</div>
-                    </div>
-                    <div class="ld-kpi-card purple">
-                        <div class="ld-kpi-label">Currency Stored</div>
-                        <div class="ld-kpi-value">
-                            <t t-esc="state.data.preshipment.currencyStored.toFixed(2)"/>
-                        </div>
-                        <div class="ld-kpi-sub">
-                            <t t-esc="state.data.preshipment.fulfillPercent"/>% fulfilled
-                        </div>
-                    </div>
-                    <div class="ld-kpi-card amber">
-                        <div class="ld-kpi-label">Total Interest</div>
-                        <div class="ld-kpi-value">
-                            <t t-esc="this._fmt(state.data.preshipment.totalInterest)"/>
-                        </div>
-                        <div class="ld-kpi-sub">Accrued interest</div>
-                    </div>
-                    <div class="ld-kpi-card red">
-                        <div class="ld-kpi-label">Penalty Amount</div>
-                        <div class="ld-kpi-value">
-                            <t t-esc="this._fmt(state.data.preshipment.totalPenalty)"/>
-                        </div>
-                        <div class="ld-kpi-sub">For late currency delivery</div>
-                    </div>
-                    <div class="ld-kpi-card blue">
-                        <div class="ld-kpi-label">Financed Goods Value</div>
-                        <div class="ld-kpi-value">
-                            <t t-esc="this._fmt(state.data.preshipment.goodsValue)"/>
-                        </div>
-                        <div class="ld-kpi-sub">Total goods being financed</div>
-                    </div>
+                </t>
+            </div>
+
+            <div class="ld-chart-grid">
+                <div class="ld-chart-card">
+                    <div class="ld-chart-title">Loan Utilisation</div>
+                    <canvas id="preshipmentProgressChart" height="120"/>
                 </div>
-                <div class="ld-chart-grid">
-                    <div class="ld-chart-card">
-                        <div class="ld-chart-title">Loan Utilisation</div>
-                        <canvas id="preshipmentProgressChart" height="120"/>
-                    </div>
-                    <div class="ld-chart-card">
-                        <div class="ld-chart-title">Currency Commitment Progress</div>
-                        <div style="text-align:center;padding:20px;">
-                            <div style="font-size:48px;font-weight:800;color:#4f46e5;">
-                                <t t-esc="state.data.preshipment.fulfillPercent"/>%
-                            </div>
-                            <div style="font-size:14px;color:#94a3b8;margin-top:8px;">
+                <div class="ld-chart-card">
+                    <div class="ld-chart-title">Currency Commitment Progress</div>
+                    <div style="text-align:center;padding:20px;">
+                        <div style="font-size:48px;font-weight:800;color:#4f46e5;">
+                            <t t-esc="state.data.preshipment.fulfillPercent"/>
+%
+                        </div>
+                        <div style="font-size:14px;color:#94a3b8;margin-top:8px;">
                                 of foreign currency obligation fulfilled
-                            </div>
-                            <div style="background:#e5e7eb;border-radius:999px;height:12px;margin-top:16px;">
-                                <div t-attf-style="width:#{state.data.preshipment.fulfillPercent}%;background:#10b981;height:12px;border-radius:999px;transition:width 0.5s;"/>
-                            </div>
+                        </div>
+                        <div style="background:#e5e7eb;border-radius:999px;height:12px;margin-top:16px;">
+                            <div t-attf-style="width:#{state.data.preshipment.fulfillPercent}%;background:#10b981;height:12px;border-radius:999px;transition:width 0.5s;"/>
                         </div>
                     </div>
                 </div>
-            </t>
+            </div>
 
-        </div>
-    </t>
+            <!-- Export Proceeds vs Expected & Contract Status -->
+            <div class="ld-chart-grid">
+                <div class="ld-chart-card">
+                    <div class="ld-chart-title">💰 Export Proceeds: Received vs Expected</div>
+                    <canvas id="preshipmentProceedsChart" height="140"/>
+                </div>
+                <div class="ld-chart-card">
+                    <div class="ld-chart-title">📄 Export Contract Status</div>
+                    <t t-if="state.data.preshipment.contractStatus and state.data.preshipment.contractStatus.length">
+                        <canvas id="preshipmentContractStatusChart" height="200"/>
+                    </t>
+                    <t t-else="">
+                        <div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px;">
+                            No sales orders linked to active pre-shipment loans yet.
+                        </div>
+                    </t>
+                </div>
+            </div>
+
+
+        </t>
+
+    </div>
+</t>
 </templates>

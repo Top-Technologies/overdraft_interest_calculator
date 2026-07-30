@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 class OverdraftCloseWizard(models.TransientModel):
     _name = 'overdraft.close.wizard'
@@ -19,5 +20,11 @@ class OverdraftCloseWizard(models.TransientModel):
         }
 
     def action_confirm_close(self):
-        self.overdraft_id.write({'state': 'closed'})
+        od = self.overdraft_id
+        if od.outstanding_interest > 0 or od.outstanding_penalty > 0:
+            raise UserError(_(
+                'Cannot close: outstanding interest of %s and penalty of %s remain. '
+                'Please settle all outstanding amounts before closing.'
+            ) % (od.outstanding_interest, od.outstanding_penalty))
+        od.write({'state': 'closed'})
         return {'type': 'ir.actions.act_window_close'}

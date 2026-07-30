@@ -27,6 +27,10 @@ class OverdraftPaymentWizard(models.TransientModel):
         required=True,
         currency_field='currency_id',
     )
+    payment_type = fields.Selection([
+        ('normal', 'Normal Payment'),
+        ('penalty', 'Penalty Payment')
+    ], string='Payment Type', default='normal', required=True)
     memo = fields.Char(string='Memo')
 
     def action_confirm(self):
@@ -44,16 +48,40 @@ class OverdraftPaymentWizard(models.TransientModel):
 
         if line:
             # Add to existing payment
-            line.with_context(skip_access_check=True).write({
-                'payment': line.payment + self.amount,
-                'notes': self.memo or line.notes,
-            })
+            vals = {}
+            if self.memo:
+                existing_notes = line.notes or ''
+                vals['notes'] = (existing_notes + '\n' + self.memo).strip()
+            if self.payment_type == 'normal':
+                vals['payment'] = line.payment + self.amount
+            else:
+                vals['penalty_payment'] = line.penalty_payment + self.amount
+                
+            line.sudo().write(vals)
         else:
-            self.env['overdraft.line'].with_context(skip_access_check=True).create({
+            vals = {
                 'overdraft_id': overdraft.id,
                 'date': self.date,
-                'payment': self.amount,
                 'notes': self.memo,
-            })
+            }
+            if self.payment_type == 'normal':
+                vals['payment'] = self.amount
+            else:
+                vals['penalty_payment'] = self.amount
+            self.env['overdraft.line'].sudo().create(vals)
+
+        # Recalculate amortization to reflect new payments
+        overdraft.action_calculate_amortization()
+
+        # Post clean log note in chatter using Markup
+        from markupsafe import Markup
+        user_name = self.env.user.name
+        formatted_amount = f"{self.amount:,.2f} {self.currency_id.symbol or ''}"
+        pay_type_label = "Penalty Payment" if self.payment_type == 'penalty' else "Payment"
+
+        message_body = Markup("<b>%s Recorded:</b> %s on %s by %s") % (pay_type_label, formatted_amount, self.date, user_name)
+        if self.memo:
+            message_body += Markup(" (Memo: %s)") % self.memo
+        overdraft.message_post(body=message_body, message_type='comment', subtype_xmlid='mail.mt_note')
 
         return {'type': 'ir.actions.act_window_close'}

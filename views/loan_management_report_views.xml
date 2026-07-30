@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Report Action -->
+    <record id="action_report_loan_management_report" model="ir.actions.report">
+        <field name="name">Weekly Loan Report</field>
+        <field name="model">loan.management.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">overdraft_interest_calculator.report_loan_weekly_pdf</field>
+        <field name="report_file">Weekly_Loan_Report</field>
+        <field name="binding_model_id" ref="model_loan_management_report"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- QWeb Template for PDF Export -->
+    <template id="report_loan_weekly_pdf">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2><span t-field="doc.name"/></h2>
+                        <p><strong>Date:</strong> <span t-field="doc.date"/></p>
+                        <hr/>
+                        <div style="margin-top: 15px;">
+                            <t t-out="doc.report_body"/>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="view_loan_management_report_form" model="ir.ui.view">
+        <field name="name">loan.management.report.form</field>
+        <field name="model">loan.management.report</field>
+        <field name="arch" type="xml">
+            <form string="Weekly Report" create="false" edit="false">
+                <header>
+                    <button name="action_print_report" string="Export PDF" type="object" class="btn-primary" icon="fa-file-pdf-o"/>
+                    <button name="action_export_xlsx" string="Export Excel (XLSX)" type="object" class="btn-secondary" icon="fa-file-excel-o"/>
+                    <button name="action_export_csv" string="Export CSV" type="object" class="btn-secondary" icon="fa-file-text-o"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="date" readonly="1"/>
+                    </group>
+                    <field name="report_body" widget="html" readonly="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_loan_management_report_list" model="ir.ui.view">
+        <field name="name">loan.management.report.list</field>
+        <field name="model">loan.management.report</field>
+        <field name="arch" type="xml">
+            <list string="Weekly Reports" default_order="date desc" create="false" import="false" export_xlsx="false">
+                <field name="name"/>
+                <field name="date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_loan_management_report" model="ir.actions.act_window">
+        <field name="name">Weekly Reports</field>
+        <field name="res_model">loan.management.report</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_loan_management_report"
+              name="Weekly Reports"
+              parent="menu_overdraft_root"
+              action="action_loan_management_report"
+              sequence="50"/>
+</odoo>
+

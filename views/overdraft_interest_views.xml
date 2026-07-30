@@ -66,27 +66,27 @@
                             type="object"
                             class="oe_highlight"
                             invisible="state != 'submitted'"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                            groups="overdraft_interest_calculator.group_overdraft_editor"/>
                     <button name="action_reject"
                             string="Reject"
                             type="object"
                             invisible="state != 'submitted'"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                            groups="overdraft_interest_calculator.group_overdraft_editor"/>
                     <button name="action_reset_to_draft"
                             string="Reset to Draft"
                             type="object"
                             invisible="state not in ('rejected', 'submitted')"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                            groups="overdraft_interest_calculator.group_overdraft_editor"/>
                     <button name="action_close"
                             string="Close"
                             type="object"
                             invisible="state != 'approved'"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                            groups="overdraft_interest_calculator.group_overdraft_editor"/>
                     <button name="action_reopen"
                             string="Revert to Approved (Test)"
                             type="object"
                             invisible="state != 'closed'"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
+                            groups="overdraft_interest_calculator.group_overdraft_editor"/>
                     <button name="action_create_bill"
                             string="Create Bill"
                             type="object"
@@ -125,6 +125,10 @@
                         </h1>
                     </div>
 
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company"
+                               readonly="state in ('approved', 'closed')"/>
+                    </group>
                     <!-- Main Fields - Two Columns -->
                     <group>
                         <group string="Bank Details">
@@ -145,8 +149,8 @@
                             <field name="annual_interest_rate"
                                    string="Annual Interest Rate (%)"
                                    readonly="state == 'closed'"/>
-                            <field name="annual_penalty_rate"
-                                   string="Annual Penalty Rate (%)"
+                            <field name="three_month_penalty_rate"
+                                   string="3-Month Penalty Rate (%)"
                                    readonly="state == 'closed'"/>
                             <field name="overdraft_limit"
                                    widget="monetary"
@@ -177,7 +181,7 @@
                         <!-- Tab 1: Daily Entries -->
                         <page string="Daily Entries">
                             <field name="overdraft_line_ids">
-                                <list editable="bottom">
+                                <list editable="bottom" create="false" delete="false">
                                     <field name="currency_id" column_invisible="1"/>
                                     <field name="date" string="Date" readonly="1"/>
                                     <field name="debit" string="Debit"
@@ -187,6 +191,21 @@
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
                                            readonly="1"/>
+                                    <field name="interest_payment" string="Interest Payment"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"
+                                           optional="show"/>
+                                    <field name="principal_payment" string="Principal Payment"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"
+                                           optional="show"/>
+                                    <field name="penalty_payment" string="Penalty Payment"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"
+                                           optional="show"/>
                                     <field name="balance" string="Balance"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
@@ -195,9 +214,11 @@
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
                                            readonly="1"/>
-                                    <field name="penalty" string="Extra Interest"
+                                    <field name="penalty_accrued" string="Penalty Accrued"
                                            widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"/>
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"
+                                           optional="hide"/>
                                     <field name="cumulative_interest" string="Cumulative Interest"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
@@ -228,7 +249,15 @@
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
                                            readonly="1"/>
+                                    <field name="outstanding_interest" string="Outstanding Interest"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
                                     <field name="total_penalty" string="Total Penalty"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           readonly="1"/>
+                                    <field name="outstanding_penalty" string="Penalty Accrued"
                                            widget="monetary"
                                            options="{'currency_field': 'currency_id'}"
                                            readonly="1"/>
@@ -263,13 +292,15 @@
                                     <field name="purpose"
                                            placeholder="Describe the intended use of this overdraft facility…"
                                            nolabel="1"
-                                           colspan="2"/>
+                                           colspan="2"
+                                           required="1"/>
                                 </group>
                             </group>
                             <separator string="Collateral / Security Documents"/>
                             <field name="collateral_document_ids"
                                    widget="many2many_binary"
-                                   string="Attach Collateral / Security Documents"/>
+                                   string="Attach Collateral / Security Documents"
+                                   required="1"/>
                         </page>
                     </notebook>
 

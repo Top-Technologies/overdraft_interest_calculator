@@ -1,266 +1,209 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ============================================ -->
-    <!--   TERM LOAN — LIST VIEW                      -->
-    <!-- ============================================ -->
-    <record id="view_term_loan_list" model="ir.ui.view">
-        <field name="name">term.loan.list</field>
-        <field name="model">term.loan</field>
-        <field name="arch" type="xml">
-            <list string="Term Loans">
-                <field name="name" string="Reference"/>
-                <field name="lender_name" string="Lender (Bank)"/>
-                <field name="currency_id" column_invisible="1"/>
-                <field name="loan_amount" string="Loan Amount"
-                       widget="monetary"
-                       options="{'currency_field': 'currency_id'}"/>
-                <field name="annual_interest_rate" string="Annual Rate"
-                       widget="percentage"/>
-                <field name="loan_period_years" string="Period (Yrs)"/>
-                <field name="start_date" string="Start Date"/>
-                <field name="scheduled_payment" string="Sched. Payment"
-                       widget="monetary"
-                       options="{'currency_field': 'currency_id'}"
-                       optional="show"/>
-                <field name="state" string="Status"
-                       widget="badge"
-                       decoration-info="state == 'draft'"
-                       decoration-primary="state == 'submitted'"
-                       decoration-warning="state == 'approved'"
-                       decoration-success="state == 'active'"
-                       decoration-danger="state == 'rejected'"
-                       decoration-muted="state == 'closed'"/>
-            </list>
-        </field>
-    </record>
+       <!-- ============================================ -->
+       <!--   TERM LOAN — LIST VIEW                      -->
+       <!-- ============================================ -->
+       <record id="view_term_loan_list" model="ir.ui.view">
+              <field name="name">term.loan.list</field>
+              <field name="model">term.loan</field>
+              <field name="arch" type="xml">
+                     <list string="Term Loans" decoration-danger="is_delinquent">
+                            <field name="name" string="Reference"/>
+                            <field name="lender_name" string="Lender (Bank)"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="loan_amount" string="Loan Amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="annual_interest_rate" string="Annual Rate" widget="percentage"/>
+                            <field name="loan_period_years" string="Period (Yrs)"/>
+                            <field name="start_date" string="Start Date"/>
+                            <field name="scheduled_payment" string="Sched. Payment" widget="monetary" options="{'currency_field': 'currency_id'}" optional="show"/>
+                            <field name="disbursed_amount" string="Disbursed" widget="monetary" options="{'currency_field': 'currency_id'}" optional="hide"/>
+                            <field name="undisbursed_balance" string="Un-disbursed" widget="monetary" options="{'currency_field': 'currency_id'}" optional="hide"/>
+                            <field name="outstanding_principal" string="Outstanding Principal" widget="monetary" options="{'currency_field': 'currency_id'}" optional="show"/>
+                            <field name="overdue_amount" string="Overdue" widget="monetary" options="{'currency_field': 'currency_id'}" optional="show"/>
+                            <field name="days_past_due" string="DPD" optional="show"/>
+                            <field name="is_delinquent" column_invisible="1"/>
+                            <field name="alert_level" string="Alert" widget="badge" decoration-success="alert_level == 'green'" decoration-warning="alert_level == 'yellow'" decoration-danger="alert_level == 'red'" decoration-info="alert_level == 'purple'" optional="show"/>
+                            <field name="state" string="Status" widget="badge" decoration-info="state == 'draft'" decoration-primary="state == 'submitted'" decoration-warning="state == 'approved'" decoration-success="state == 'active'" decoration-danger="state == 'rejected'" decoration-muted="state == 'closed'"/>
+                     </list>
+              </field>
+       </record>
 
-    <!-- ============================================ -->
-    <!--   TERM LOAN — FORM VIEW                      -->
-    <!-- ============================================ -->
-    <record id="view_term_loan_form" model="ir.ui.view">
-        <field name="name">term.loan.form</field>
-        <field name="model">term.loan</field>
-        <field name="arch" type="xml">
-            <form string="Term Loan">
-                <!-- Workflow Buttons -->
-                <header>
-                    <button name="action_submit"
-                            string="Submit for Approval"
-                            type="object"
-                            class="oe_highlight"
-                            invisible="state != 'draft'"/>
-                    <button name="action_approve"
-                            string="Approve"
-                            type="object"
-                            class="oe_highlight"
-                            invisible="state != 'submitted'"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
-                    <button name="action_reject"
-                            string="Reject"
-                            type="object"
-                            invisible="state != 'submitted'"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
-                    <button name="action_generate_schedule"
-                            string="Generate Schedule"
-                            type="object"
-                            class="oe_highlight"
-                            invisible="state != 'approved'"
-                            confirm="This will generate the full amortization schedule. Continue?"/>
-                    <button name="action_recalculate_schedule"
-                            string="Recalculate Schedule"
-                            type="object"
-                            class="oe_highlight"
-                            invisible="state not in ('active',)"
-                            confirm="This will recalculate all values based on your extra payments. Continue?"/>
-                    <button name="action_reset_to_draft"
-                            string="Reset to Draft"
-                            type="object"
-                            invisible="state not in ('rejected', 'submitted')"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
-                    <button name="action_close"
-                            string="Close"
-                            type="object"
-                            invisible="state != 'active'"
-                            groups="overdraft_interest_calculator.group_overdraft_manager"/>
-                    <button name="action_create_bill"
-                            string="Create Bill"
-                            type="object"
-                            class="oe_highlight"
-                            invisible="state not in ('active',)"/>
-                    <button name="action_record_payment"
-                            string="Record Payment"
-                            type="object"
-                            invisible="state not in ('active',)"/>
-                    <field name="state"
-                           widget="statusbar"
-                           statusbar_visible="draft,submitted,approved,active,closed"/>
-                </header>
+       <!-- ============================================ -->
+       <!--   TERM LOAN — FORM VIEW                      -->
+       <!-- ============================================ -->
+       <record id="view_term_loan_form" model="ir.ui.view">
+              <field name="name">term.loan.form</field>
+              <field name="model">term.loan</field>
+              <field name="arch" type="xml">
+                     <form string="Term Loan">
+                            <!-- Workflow Buttons -->
+                            <header>
+                                   <button name="action_submit" string="Submit for Approval" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                                   <button name="action_approve" string="Approve" type="object" class="oe_highlight" invisible="state != 'submitted'" groups="overdraft_interest_calculator.group_overdraft_editor"/>
+                                   <button name="action_reject" string="Reject" type="object" invisible="state != 'submitted'" groups="overdraft_interest_calculator.group_overdraft_editor"/>
+                                   <button name="action_generate_schedule" string="Generate Schedule" type="object" class="oe_highlight" invisible="state != 'approved'" confirm="This will generate the full amortization schedule. Continue?"/>
+                                   <button name="action_recalculate_schedule" string="Recalculate Schedule" type="object" class="oe_highlight" invisible="state not in ('active',)" confirm="This will recalculate all values based on your extra payments. Continue?"/>
+                                   <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state not in ('rejected', 'submitted')" groups="overdraft_interest_calculator.group_overdraft_editor"/>
+                                   <button name="action_close" string="Close" type="object" invisible="state != 'active'" groups="overdraft_interest_calculator.group_overdraft_editor"/>
+                                   <button name="action_create_bill" string="Create Bill" type="object" class="oe_highlight" invisible="state not in ('active',)"/>
+                                   <button name="action_record_payment" string="Record Payment" type="object" invisible="state not in ('active',)"/>
+                                   <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,active,closed"/>
+                                   <field name="alert_level" widget="badge" invisible="alert_level == 'none'" decoration-success="alert_level == 'green'" decoration-warning="alert_level == 'yellow'" decoration-danger="alert_level == 'red'" decoration-info="alert_level == 'purple'"/>
+                            </header>
 
-                <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="action_view_moves"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-book">
-                            <field name="move_count" widget="statinfo"
-                                   string="Journal Entries"/>
-                        </button>
-                        <button name="action_view_bills"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-pencil-square-o">
-                            <field name="bill_count" widget="statinfo"
-                                   string="Bills"/>
-                        </button>
-                    </div>
-                    <!-- Reference Title -->
-                    <div class="oe_title">
-                        <h1>
-                            <field name="name" placeholder="Reference"/>
-                        </h1>
-                    </div>
+                            <sheet>
+                                   <div class="oe_button_box" name="button_box">
+                                          <button name="action_view_moves" type="object" class="oe_stat_button" icon="fa-book">
+                                                 <field name="move_count" widget="statinfo" string="Journal Entries"/>
+                                          </button>
+                                          <button name="action_view_bills" type="object" class="oe_stat_button" icon="fa-pencil-square-o">
+                                                 <field name="bill_count" widget="statinfo" string="Bills"/>
+                                          </button>
+                                   </div>
+                                   <!-- Reference Title -->
+                                   <div class="oe_title">
+                                          <h1>
+                                                 <field name="name" placeholder="Reference"/>
+                                          </h1>
+                                   </div>
 
-                    <!-- Main Fields - Two Columns -->
-                    <group>
-                        <group string="Loan Details">
-                            <field name="lender_name"
-                                   readonly="state not in ('draft',)"/>
-                            <field name="bank_id"/>
-                            <field name="loan_amount"
-                                   widget="monetary"
-                                   options="{'currency_field': 'currency_id'}"
-                                   readonly="state not in ('draft',)"/>
-                            <field name="annual_interest_rate"
-                                   widget="percentage"
-                                   readonly="state not in ('draft',)"/>
-                            <field name="loan_period_years"
-                                   readonly="state not in ('draft',)"/>
-                        </group>
-                        <group string="Payment Setup">
-                            <field name="payments_per_year"
-                                   readonly="state not in ('draft',)"/>
-                            <field name="start_date"
-                                   readonly="state not in ('draft',)"/>
-                            <field name="currency_id"
-                                   readonly="state not in ('draft',)"
-                                   groups="base.group_multi_currency"/>
-                        </group>
-                    </group>
+                                   <!-- Delinquency / Alert Banner -->
+                                   <div t-attf-class="alert alert-danger" role="alert" invisible="alert_level not in ('yellow', 'red', 'purple')">
+                                          <strong>
+                                                 <span invisible="alert_level != 'yellow'">Delinquent!</span>
+                                                 <span invisible="alert_level != 'red'">High Risk of Default!</span>
+                                                 <span invisible="alert_level != 'purple'">Impaired Loan!</span>
+                                          </strong>
+                                          <field name="alert_message" readonly="1" nolabel="1" class="oe_inline"/>
+                                   </div>
+                                   <div class="alert alert-info" role="alert" invisible="alert_level != 'green'">
+                                          <strong>Upcoming Payment.</strong>
+                                          <field name="alert_message" readonly="1" nolabel="1" class="oe_inline"/>
+                                   </div>
 
-                    <!-- Account Fields - Two Columns -->
-                    <group>
-                        <group string="Account Entries">
-                            <field name="account_receivable_id"
-                                   readonly="state not in ('draft',)"/>
-                            <field name="account_payable_id"
-                                   readonly="state not in ('draft',)"/>
-                        </group>
-                        <group string="Account Properties">
-                            <field name="income_account_id"
-                                   readonly="state not in ('draft',)"/>
-                            <field name="expense_account_id"
-                                   readonly="state not in ('draft',)"/>
-                        </group>
-                    </group>
+                                    <group>
+                                           <field name="company_id" groups="base.group_multi_company"
+                                                  readonly="state not in ('draft',)"/>
+                                    </group>
 
-                    <!-- Tabs -->
-                    <notebook>
-                        <!-- Tab: Loan Summary (Amortization Table) -->
-                        <page string="Loan Summary">
-                            <!-- Summary Stats -->
-                            <group>
-                                <group string="Payment Info">
-                                    <field name="scheduled_payment"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1"/>
-                                    <field name="scheduled_num_payments"
-                                           readonly="1"/>
-                                    <field name="actual_num_payments"
-                                           readonly="1"/>
-                                </group>
-                                <group string="Totals">
-                                    <field name="total_interest"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1"/>
-                                    <field name="total_early_payments"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1"/>
-                                </group>
-                            </group>
+                                   <!-- Main Fields - Two Columns -->
+                                   <group>
+                                          <group string="Loan Details">
+                                                 <field name="lender_name" readonly="state not in ('draft',)"/>
+                                                 <field name="bank_id"/>
+                                                 <field name="loan_amount" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="state not in ('draft',)"/>
+                                                 <field name="annual_interest_rate" widget="percentage" readonly="state not in ('draft',)"/>
+                                                 <field name="loan_period_years" readonly="state not in ('draft',)"/>
+                                                 <field name="disbursed_amount" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="state in ('draft', 'submitted', 'rejected')"/>
+                                                 <field name="undisbursed_balance" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                          </group>
+                                          <group string="Payment Setup">
+                                                 <field name="payments_per_year" readonly="state not in ('draft',)"/>
+                                                 <field name="start_date" readonly="state not in ('draft',)"/>
+                                                 <field name="grace_period_date" readonly="state not in ('draft',)"/>
+                                                 <field name="interest_accrue_from_grace" readonly="state not in ('draft',)" invisible="not grace_period_date"/>
+                                                 <field name="currency_id" readonly="state not in ('draft',)" groups="base.group_multi_currency"/>
+                                          </group>
+                                   </group>
 
-                            <!-- Amortization Schedule Table -->
-                            <field name="loan_line_ids"
-                                   invisible="state not in ('active', 'closed')">
-                                <list string="Amortization Schedule"
-                                      editable="bottom"
-                                      create="false" delete="false">
-                                    <field name="currency_id" column_invisible="1"/>
-                                    <field name="payment_number" string="Pmt. No."
-                                           readonly="1"/>
-                                    <field name="payment_date" string="Payment Date"
-                                           readonly="1"/>
-                                    <field name="beginning_balance" string="Beginning Balance"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1"/>
-                                    <field name="scheduled_payment" string="Scheduled Payment"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1"/>
-                                    <field name="extra_payment" string="Extra Payment"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"/>
-                                    <field name="total_payment" string="Total Payment"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1"/>
-                                    <field name="principal" string="Principal"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1"/>
-                                    <field name="interest" string="Interest"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1"/>
-                                    <field name="ending_balance" string="Ending Balance"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1"/>
-                                    <field name="cumulative_interest" string="Cumulative Interest"
-                                           widget="monetary"
-                                           options="{'currency_field': 'currency_id'}"
-                                           readonly="1"/>
-                                </list>
-                            </field>
-                        </page>
+                                   <!-- Account Fields - Two Columns -->
+                                   <group>
+                                          <group string="Account Entries">
+                                                 <field name="account_receivable_id" readonly="state not in ('draft',)"/>
+                                                 <field name="account_payable_id" readonly="state not in ('draft',)"/>
+                                          </group>
+                                          <group string="Account Properties">
+                                                 <field name="income_account_id" readonly="state not in ('draft',)"/>
+                                                 <field name="expense_account_id" readonly="state not in ('draft',)"/>
+                                          </group>
+                                   </group>
 
-                        <!-- Tab: Purpose & Collateral -->
-                        <page string="Purpose &amp; Collateral">
-                            <group>
-                                <group string="Loan Purpose" colspan="2">
-                                    <field name="purpose"
-                                           placeholder="Describe the intended use of these loan funds…"
-                                           nolabel="1"
-                                           colspan="2"/>
-                                </group>
-                            </group>
-                            <separator string="Collateral Documents"/>
-                            <field name="collateral_document_ids"
-                                   widget="many2many_binary"
-                                   string="Attach Collateral Documents"/>
-                        </page>
-                    </notebook>
+                                   <!-- Penalty Rates -->
+                                   <group>
+                                          <group string="Penalty Rates">
+                                                 <field name="penalty_rate_tier1" string="Days 1–30 (% p.a.)"/>
+                                                 <field name="penalty_rate_tier2" string="Days 31–60 (% p.a.)"/>
+                                                 <field name="penalty_rate_tier3" string="Days 60+ (% p.a.)"/>
+                                          </group>
+                                   </group>
+
+                                   <!-- Tabs -->
+                                   <notebook>
+                                          <!-- Tab: Loan Summary (Amortization Table) -->
+                                          <page string="Loan Summary">
+                                                 <!-- Summary Stats -->
+                                                 <group>
+                                                        <group string="Payment Info">
+                                                               <field name="scheduled_payment" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="scheduled_num_payments" readonly="1"/>
+                                                               <field name="actual_num_payments" readonly="1"/>
+                                                        </group>
+                                                        <group string="Totals">
+                                                               <field name="total_interest" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="total_early_payments" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                        </group>
+                                                 </group>
+
+                                                 <!-- Risk & Monitoring -->
+                                                 <group>
+                                                        <group string="Outstanding &amp; Accrual">
+                                                               <field name="outstanding_principal" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="accrued_interest" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="due_within_30_days" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="due_within_90_days" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                        </group>
+                                                        <group string="Delinquency">
+                                                               <field name="overdue_principal" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="overdue_interest" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="overdue_amount" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="days_past_due" readonly="1"/>
+                                                               <field name="penalty_amount" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                        </group>
+                                                 </group>
+
+                                                 <!-- Amortization Schedule Table -->
+                                                 <field name="loan_line_ids" invisible="state not in ('active', 'closed')">
+                                                        <list string="Amortization Schedule" editable="bottom" create="false" delete="false" decoration-danger="is_overdue" decoration-muted="is_paid">
+                                                               <field name="currency_id" column_invisible="1"/>
+                                                               <field name="is_overdue" column_invisible="1"/>
+                                                               <field name="payment_number" string="Pmt. No." readonly="1"/>
+                                                               <field name="payment_date" string="Payment Date" readonly="1"/>
+                                                               <field name="beginning_balance" string="Beginning Balance" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="scheduled_payment" string="Scheduled Payment" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="extra_payment" string="Extra Payment" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                                               <field name="total_payment" string="Base Payment" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="penalty_amount" string="Penalty Accrued" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="total_due" string="Total Due" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="principal" string="Principal" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="interest" string="Interest" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="ending_balance" string="Ending Balance" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="cumulative_interest" string="Cumulative Interest" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1"/>
+                                                               <field name="days_overdue" string="Days Overdue" readonly="1"/>
+                                                               <field name="is_paid" string="Paid" readonly="1"/>
+                                                               <field name="paid_date" string="Paid Date" readonly="1"/>
+                                                        </list>
+                                                 </field>
+                                          </page>
+
+                                          <!-- Tab: Purpose & Collateral -->
+                                          <page string="Purpose &amp; Collateral">
+                                                 <group>
+                                                        <group string="Loan Purpose" colspan="2">
+                                                               <field name="purpose" placeholder="Describe the intended use of these loan funds…" nolabel="1" colspan="2" required="1"/>
+                                                        </group>
+                                                 </group>
+                                                 <separator string="Collateral Documents"/>
+                                                 <field name="collateral_document_ids" widget="many2many_binary" string="Attach Collateral Documents" required="1"/>
+                                          </page>
+                                   </notebook>
 
 
-                    <field name="currency_id" invisible="1"/>
-                </sheet>
+                                   <field name="currency_id" invisible="1"/>
+                            </sheet>
 
-                <!-- Chatter (Odoo 18 style) -->
-                <chatter/>
-            </form>
-        </field>
-    </record>
+                            <!-- Chatter (Odoo 18 style) -->
+                            <chatter/>
+                     </form>
+              </field>
+       </record>
 </odoo>

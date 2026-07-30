@@ -12,6 +12,7 @@
                     <field name="overdraft_id" invisible="1"/>
                     <field name="currency_id" invisible="1"/>
                     <field name="date"/>
+                    <field name="payment_type" widget="radio"/>
                     <field name="amount" widget="monetary"
                            options="{'currency_field': 'currency_id'}"/>
                     <field name="memo"/>
@@ -38,8 +39,11 @@
                 <group>
                     <field name="loan_id" invisible="1"/>
                     <field name="currency_id" invisible="1"/>
+                    <field name="date"/>
                     <field name="line_id"
                            options="{'no_create': True, 'no_edit': True}"/>
+                    <field name="penalty_accrued"
+                           invisible="not penalty_accrued"/>
                     <field name="amount" widget="monetary"
                            options="{'currency_field': 'currency_id'}"/>
                     <field name="memo"/>

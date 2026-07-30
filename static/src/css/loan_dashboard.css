@@ -217,3 +217,114 @@
     font-size: 12px;
     color: #94a3b8;
 }
+
+/* ── Alerts Panel ── */
+.ld-alerts-panel {
+    margin-bottom: 16px;
+}
+
+.ld-alert-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.2s ease;
+}
+
+.ld-alert-row:hover {
+    background-color: #f8fafc;
+}
+
+.ld-alert-row:last-child {
+    border-bottom: none;
+}
+
+.ld-alert-row.ld-alert-green {
+    animation: pulse-bg-green 1s infinite;
+}
+
+.ld-alert-row.ld-alert-yellow {
+    animation: pulse-bg-yellow 1s infinite;
+}
+
+.ld-alert-row.ld-alert-red {
+    animation: pulse-bg-red 1s infinite;
+}
+
+.ld-alert-row.ld-alert-purple {
+    animation: pulse-bg-purple 1s infinite;
+}
+
+.ld-alert-name {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.ld-alert-label {
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.ld-alert-green .ld-alert-label {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.ld-alert-yellow .ld-alert-label {
+    background: #fef9c3;
+    color: #a16207;
+}
+
+.ld-alert-red .ld-alert-label {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.ld-alert-purple .ld-alert-label {
+    background: #f3e8ff;
+    color: #6b21a8;
+}
+
+.ld-alert-msg {
+    color: #64748b;
+    margin-left: auto;
+}
+
+/* Recolor the backend badge widget to true purple for the Purple alert level
+   (Odoo's badge widget has no built-in "purple" bootstrap variant, so the
+   field uses decoration-info as a stand-in and we override its color here.
+   Scoped to the alert_level field so other info badges elsewhere are
+   unaffected). */
+.o_field_widget[name="alert_level"] .badge.text-bg-info {
+    background-color: #8b5cf6 !important;
+    color: white !important;
+}
+
+@keyframes pulse-bg-green {
+    0% { background-color: rgba(34, 197, 94, 0.05); }
+    50% { background-color: rgba(34, 197, 94, 0.2); }
+    100% { background-color: rgba(34, 197, 94, 0.05); }
+}
+@keyframes pulse-bg-yellow {
+    0% { background-color: rgba(234, 179, 8, 0.05); }
+    50% { background-color: rgba(234, 179, 8, 0.2); }
+    100% { background-color: rgba(234, 179, 8, 0.05); }
+}
+@keyframes pulse-bg-red {
+    0% { background-color: rgba(239, 68, 68, 0.05); }
+    50% { background-color: rgba(239, 68, 68, 0.2); }
+    100% { background-color: rgba(239, 68, 68, 0.05); }
+}
+@keyframes pulse-bg-purple {
+    0% { background-color: rgba(147, 51, 234, 0.05); }
+    50% { background-color: rgba(147, 51, 234, 0.2); }
+    100% { background-color: rgba(147, 51, 234, 0.05); }
+}

@@ -24,6 +24,16 @@ class TermLoanPaymentWizard(models.TransientModel):
         domain="[('loan_id', '=', loan_id), ('ending_balance', '>', 0)]",
         help='Select the schedule line to apply the extra payment to.',
     )
+    penalty_accrued = fields.Monetary(
+        string='Penalty Accrued',
+        related='line_id.penalty_amount',
+        readonly=True,
+    )
+    date = fields.Date(
+        string='Payment Date',
+        required=True,
+        default=fields.Date.context_today,
+    )
     amount = fields.Monetary(
         string='Extra Payment Amount',
         required=True,
@@ -41,7 +51,7 @@ class TermLoanPaymentWizard(models.TransientModel):
                 self.line_id = unpaid[0].id
 
     def action_confirm(self):
-        """Record the extra payment on the selected schedule line
+        """Record the payment on the selected schedule line, mark it as paid,
         and trigger recalculation."""
         self.ensure_one()
         if self.amount <= 0:
@@ -51,12 +61,35 @@ class TermLoanPaymentWizard(models.TransientModel):
         if not line:
             raise UserError(_('Please select a payment line.'))
 
-        # Update the extra_payment on the line
-        line.write({
+        # Mark line as paid, set the date, and update extra payment
+        line.sudo().write({
+            'is_paid': True,
+            'paid_date': self.date,
             'extra_payment': line.extra_payment + self.amount,
         })
 
         # Trigger recalculation of the schedule
-        self.loan_id.action_recalculate_schedule()
+        self.loan_id.sudo().action_recalculate_schedule()
+
+        # Post clean log note in chatter using Markup
+        from markupsafe import Markup
+        user_name = self.env.user.name
+        symbol = self.currency_id.symbol or ''
+        pmt_no = line.payment_number
+
+        if self.amount > 0:
+            formatted_total = f"{line.total_payment:,.2f} {symbol}"
+            formatted_extra = f"{self.amount:,.2f} {symbol}"
+            payment_desc = f"{formatted_total} (includes {formatted_extra} Extra Payment)"
+        else:
+            formatted_total = f"{line.total_payment:,.2f} {symbol}"
+            payment_desc = f"{formatted_total}"
+
+        message_body = Markup(
+            "<b>Payment Recorded:</b> %s for Payment #%s on %s by %s"
+        ) % (payment_desc, pmt_no, self.date, user_name)
+        if self.memo:
+            message_body += Markup(" (Memo: %s)") % self.memo
+        self.loan_id.message_post(body=message_body, message_type='comment', subtype_xmlid='mail.mt_note')
 
         return {'type': 'ir.actions.act_window_close'}
