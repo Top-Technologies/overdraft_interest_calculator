@@ -11,7 +11,6 @@
             <field name="interval_type">weeks</field>
             <field name="nextcall">2026-07-27 05:00:00</field>
             <field name="active" eval="True"/>
-            <field name="doall" eval="True"/>
         </record>
     </data>
 </odoo>
