@@ -17,8 +17,13 @@
             <t t-foreach="docs" t-as="doc">
                 <t t-call="web.external_layout">
                     <div class="page">
-                        <h2><span t-field="doc.name"/></h2>
-                        <p><strong>Date:</strong> <span t-field="doc.date"/></p>
+                        <h2>
+                            <span t-field="doc.name"/>
+                        </h2>
+                        <p>
+                            <strong>Date:</strong>
+                            <span t-field="doc.date"/>
+                        </p>
                         <hr/>
                         <div style="margin-top: 15px;">
                             <t t-out="doc.report_body"/>
@@ -71,10 +76,6 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="menu_loan_management_report"
-              name="Weekly Reports"
-              parent="menu_overdraft_root"
-              action="action_loan_management_report"
-              sequence="50"/>
+    <menuitem id="menu_loan_management_report" name="Weekly Reports" parent="menu_overdraft_root" action="action_loan_management_report" sequence="50"/>
 </odoo>
 
