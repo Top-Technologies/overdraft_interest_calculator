@@ -116,4 +116,11 @@
               parent="menu_reporting"
               action="action_server_report_exposure"
               sequence="50"/>
+
+    <!-- Weekly Reports -->
+    <menuitem id="menu_loan_management_report"
+              name="Weekly Reports"
+              parent="menu_overdraft_root"
+              action="action_loan_management_report"
+              sequence="50"/>
 </odoo>
