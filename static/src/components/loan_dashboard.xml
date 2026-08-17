@@ -317,6 +317,32 @@
 
             <!-- ── Merchandise Loan Tab ── -->
             <t t-if="!state.loading and state.activeTab === 'merchandise' and state.data.merchandise">
+
+                <!-- Dead Stock Watchlist (shown first if available) -->
+                <t t-if="state.data.merchandise.deadStock and state.data.merchandise.deadStock.items.length">
+                    <div class="ld-chart-card ld-alerts-panel" style="margin-bottom: 16px;">
+                        <div class="ld-chart-title">
+                            ☠️ Dead Stock Watchlist (<t t-esc="state.data.merchandise.deadStock.items.length"/>)
+                        </div>
+                        <t t-foreach="state.data.merchandise.deadStock.items" t-as="ds" t-key="ds.name">
+                            <div class="ld-alert-row ld-alert-red">
+                                <span class="ld-alert-name">
+                                    <t t-esc="ds.name"/>
+                                </span>
+                                <span class="ld-alert-label">
+                                    <t t-esc="ds.category"/>
+ ·                                    <t t-esc="ds.bank"/>
+                                </span>
+                                <span class="ld-alert-msg">
+                                    Held <t t-esc="ds.daysHeld"/>
+ days · Outstanding
+                                    <t t-esc="this._fmt(ds.outstanding)"/>
+                                </span>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+
                 <div class="ld-kpi-grid">
                     <div class="ld-kpi-card blue">
                         <div class="ld-kpi-label">Total Outstanding Loan</div>
@@ -371,33 +397,6 @@
                         </div>
                     </t>
                 </div>
-                <!-- Dead Stock Monitor Alerts -->
-                <t t-if="state.data.merchandise.deadStock">
-
-                    <t t-if="state.data.merchandise.deadStock.items.length">
-                        <div class="ld-chart-card ld-alerts-panel">
-                            <div class="ld-chart-title">
-                                ☠️ Dead Stock Watchlist (<t t-esc="state.data.merchandise.deadStock.items.length"/>
-)
-                            </div>
-                            <t t-foreach="state.data.merchandise.deadStock.items" t-as="ds" t-key="ds.name">
-                                <div class="ld-alert-row ld-alert-red">
-                                    <span class="ld-alert-name">
-                                        <t t-esc="ds.name"/>
-                                    </span>
-                                    <span class="ld-alert-label">
-                                        <t t-esc="ds.category"/>
- ·                                        <t t-esc="ds.bank"/>
-                                    </span>
-                                    <span class="ld-alert-msg">
-                                        Held <t t-esc="ds.daysHeld"/>
- days · Outstanding
-                                    <t t-esc="this._fmt(ds.outstanding)"/>
-                                </span>
-                            </div>
-                        </t>
-                    </div>
-                </t>
 
                 <!-- Maturity Watchlist -->
                 <t t-if="state.data.merchandise.maturityLoans and state.data.merchandise.maturityLoans.length">
@@ -426,7 +425,6 @@
                         </t>
                     </div>
                 </t>
-            </t>
                 <div class="ld-chart-grid">
                     <div class="ld-chart-card">
                         <div class="ld-chart-title">Bank vs Company Coverage</div>

@@ -25,3 +25,5 @@ access_loan_management_report_viewer,loan.management.report.viewer,model_loan_ma
 access_loan_management_report_editor,loan.management.report.editor,model_loan_management_report,group_overdraft_editor,1,1,1,1
 access_loan_report_wizard_viewer,loan.report.wizard.viewer,model_loan_report_wizard,group_overdraft_viewer,1,1,1,0
 access_loan_report_wizard_editor,loan.report.wizard.editor,model_loan_report_wizard,group_overdraft_editor,1,1,1,1
+access_loan_alert_cron_viewer,loan.alert.cron.viewer,model_loan_alert_cron,group_overdraft_viewer,1,0,0,0
+access_loan_alert_cron_editor,loan.alert.cron.editor,model_loan_alert_cron,group_overdraft_editor,1,1,1,1

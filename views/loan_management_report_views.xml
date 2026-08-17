@@ -76,6 +76,6 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="menu_loan_management_report" name="Weekly Reports" parent="menu_overdraft_root" action="action_loan_management_report" sequence="50"/>
+
 </odoo>
 
